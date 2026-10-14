@@ -2153,10 +2153,12 @@ def page_500(_e):
 # ---------------------------------------------------------------- 启动
 if __name__ == "__main__":
     init_db()
+    _port = int(os.environ.get("ZLBST_PORT", "8300"))
+    _host = os.environ.get("ZLBST_HOST", "0.0.0.0")
     print("=" * 60)
     print("  资料百事通 %s  作者：%s（微信：%s）" % (APP_VERSION, APP_AUTHOR, APP_WECHAT))
     print("  程序大小：%.2f MB   最后保存：%s" % (APP_SIZE_MB, APP_LAST_SAVE.strftime("%Y-%m-%d %H:%M")))
-    print("  访问地址：http://127.0.0.1:8300  （手机同局域网访问 http://本机IP:8300）")
-    print("  管理后台：http://127.0.0.1:8300/admin  账号 admin / admin123")
+    print("  访问地址：http://127.0.0.1:%d  （手机同局域网访问 http://本机IP:%d）" % (_port, _port))
+    print("  管理后台：http://127.0.0.1:%d/admin  账号 admin / admin123" % _port)
     print("=" * 60)
-    app.run(host="0.0.0.0", port=8300, debug=False, threaded=True)
+    app.run(host=_host, port=_port, debug=False, threaded=True)
