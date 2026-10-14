@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}管理后台 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <div class="admin-tabs">
+    <a href="{{ url_for('admin') }}" class="on">资料审核</a>
+    <a href="{{ url_for('admin_categories') }}">分类管理</a>
+    <a href="{{ url_for('admin_feedback') }}">反馈管理</a>
+    <a href="{{ url_for('admin_users') }}">用户管理</a>
+    <a href="{{ url_for('bounty_hall') }}">悬赏大厅</a>
+    <a href="{{ url_for('admin') }}#logs">操作日志</a>
+  </div>
+
+  <!-- ============ 待审核列表 ============ -->
+  <section class="sec" id="pending">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>待审核资料</h2>
+        <span class="cnt">未经审核通过的资料不会出现在公开搜索中</span>
+      </div>
+      {% if pending %}
+      {% for d in pending %}
+    <div class="admin-card {{ 'is-vip' if d['is_vip'] }}">
+      {% if d['is_vip'] %}<span class="admin-vip-tag">VIP优先</span>{% endif %}
+        <a class="cover" href="{{ url_for('detail', doc_id=d['id']) }}">
+          {% if d['cover'] %}<img src="{{ url_for('uploaded_file', filename=d['cover']) }}" alt="封面">
+          {% else %}<span class="noimg" style="position:absolute;inset:0;display:grid;place-items:center;color:#b7c8dd;font-size:11px;">无图片</span>{% endif %}
+        </a>
+        <div class="ai-main">
+          <h3><a href="{{ url_for('detail', doc_id=d['id']) }}">{{ d['title'] }}</a></h3>
+          <div class="ai-meta">
+            <span class="tag-chip orange">待审核</span>
+            <span>{{ d['industry_name'] }} · {{ d['province'] }}{{ d['city'] }}{% if d['county'] %}{{ d['county'] }}{% endif %} · 用途：{{ d['org_name'] }}{% if d['source_org'] %} / 来源：{{ d['source_org'] }}{% endif %}</span>
+            <span>上传者：{{ d['nickname'] }} · {{ d['img_count'] }} 张图 · 提交于 {{ d['created_at'] }}</span>
+          </div>
+          <div class="ai-desc">资料用途：{{ d['purpose'] or '未填写' }}　|　获取方式：{{ d['obtain_method'] or '未填写' }}　|　来源说明：{{ d['source'] or '未填写' }}</div>
+        </div>
+        <div class="ai-ops">
+          <form action="{{ url_for('admin_review', doc_id=d['id']) }}" method="post">
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="btn btn-primary btn-sm" style="width:100%;"
+                    onclick="return confirm('确认审核通过并公开该资料？');">✓ 审核通过</button>
+          </form>
+          <form action="{{ url_for('admin_review', doc_id=d['id']) }}" method="post"
+                onsubmit="return checkReject(this);">
+            <input type="hidden" name="action" value="reject">
+            <input type="text" class="reason-input" name="reason" placeholder="驳回原因（必填）">
+            <button type="submit" class="btn btn-danger btn-sm" style="width:100%;margin-top:6px;">✕ 驳回</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-box" style="box-shadow:none;padding:34px;">
+        <h3>没有待审核的资料</h3>
+        <p>所有提交的资料均已处理完毕</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ============ 已处理（发布/驳回/下架） ============ -->
+  <section class="sec" id="managed">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>已处理资料（最近50条）</h2>
+      </div>
+      {% if published %}
+      {% for d in published %}
+      <div class="admin-item">
+        <a class="cover" href="{{ url_for('detail', doc_id=d['id']) }}">
+          {% if d['cover'] %}<img src="{{ url_for('uploaded_file', filename=d['cover']) }}" alt="封面">{% endif %}
+        </a>
+        <div class="ai-main">
+          <h3>{{ d['title'] }}</h3>
+          <div class="ai-meta">
+            <span class="tag-chip {{ {'published':'green','rejected':'red','offline':'gray'}[d['status']] }}">{{ d['status_cn'] }}</span>
+            <span>{{ d['industry_name'] }} · {{ d['province'] }}{{ d['city'] }} · {{ d['nickname'] }}</span>
+            <span>更新于 {{ d['updated_at'] }} · {{ d['views'] }} 次浏览</span>
+          </div>
+          {% if d['status'] == 'rejected' and d['reject_reason'] %}
+          <div class="ai-desc">驳回原因：{{ d['reject_reason'] }}</div>
+          {% endif %}
+        </div>
+        <div class="ai-ops">
+          {% if d['status'] == 'published' %}
+          <form action="{{ url_for('admin_offline', doc_id=d['id']) }}" method="post"
+                onsubmit="return confirm('确认下架该资料？下架后不再公开展示');">
+            <button type="submit" class="btn btn-danger btn-sm" style="width:100%;">下架</button>
+          </form>
+          {% elif d['status'] in ('offline', 'rejected') %}
+          <form action="{{ url_for('admin_republish', doc_id=d['id']) }}" method="post">
+            <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">重新上架</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-box" style="box-shadow:none;padding:34px;"><h3>暂无记录</h3></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ============ 操作日志 ============ -->
+  <section class="sec" id="logs">
+    <div class="panel">
+      <div class="panel-head"><h2>管理员操作日志（最近20条）</h2></div>
+      <div class="log-list">
+        {% if logs %}
+        {% for a in logs %}
+        <div class="log-item">
+          <span class="t">{{ a['created_at'] }}</span>
+          <span><b>{{ a['admin_name'] or '系统' }}</b> {{ a['action'] }}{% if a['detail'] %}：{{ a['detail'] }}{% endif %}（资料#{{ a['document_id'] }}）</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="log-item"><span>暂无日志</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+</div>
+<style>
+.admin-card.is-vip { border:1.5px solid #ffd166 !important; box-shadow:0 4px 18px rgba(255,180,60,.14) !important; position:relative; }
+.admin-vip-tag { position:absolute; top:-9px; right:14px; z-index:2;
+  background:linear-gradient(135deg,#ffd166,#ff9d2e); color:#6b4e12; font-size:11px;
+  font-weight:800; padding:2px 10px; border-radius:12px; }
+</style>
+<script>
+function checkReject(f) {
+  if (!f.reason.value.trim()) { alert("驳回时必须填写驳回原因"); f.reason.focus(); return false; }
+  return confirm("确认驳回该资料？作者可修改后重新提交");
+}
+</script>
+{% endblock %}

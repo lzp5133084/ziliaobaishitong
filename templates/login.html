@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}登录 - 资料百事通{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>登录账号</h2>
+    <p class="sub">登录后可上传资料、管理个人贡献</p>
+    <form action="{{ url_for('login', next=request.args.get('next', '')) }}" method="post">
+      <div class="field">
+        <label>用户名<em>*</em></label>
+        <input type="text" name="username" required autofocus placeholder="请输入用户名">
+      </div>
+      <div class="field">
+        <label>密码<em>*</em></label>
+        <input type="password" name="password" required placeholder="请输入密码">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:6px;">登 录</button>
+    </form>
+    <div class="auth-foot">还没有账号？<a href="{{ url_for('register') }}">立即注册</a></div>
+  </div>
+</div>
+{% endblock %}

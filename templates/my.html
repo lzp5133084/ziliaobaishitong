@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}我的贡献 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- ============ 个人统计 ============ -->
+  <div class="my-stats">
+    <div class="my-stat"><b>{{ items | length }}</b><span>累计上传</span></div>
+    <div class="my-stat"><b>{{ n_pub }}</b><span>已发布公开</span></div>
+    <div class="my-stat"><b>{{ n_pen }}</b><span>待审核</span></div>
+  </div>
+
+  <!-- ============ V3.0 积分与会员 ============ -->
+  <div class="my-vip-bar">
+    <div class="mvb-l">
+      <span class="mvb-pts"><b>{{ points }}</b> 积分</span>
+      <span class="lv-badge">{{ level['level_name'] }}</span>
+      {% if vip %}
+      <span class="vip-tag">VIP会员 · 有效期至 {{ vip['expire_at'][:10] }}</span>
+      {% else %}
+      <span class="vip-tag off">未开通会员</span>
+      {% endif %}
+    </div>
+    <div class="mvb-r">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('ad_page') }}">看广告赚积分</a>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('vip_center') }}">{{ '会员中心' if vip else '开通VIP会员' }}</a>
+      <a class="btn btn-orange btn-sm" href="{{ url_for('bounty_hall') }}">悬赏大厅</a>
+    </div>
+  </div>
+
+  <!-- ============ V3.0 付费咨询 ============ -->
+  {% if consults_recv %}
+  <div class="panel">
+    <div class="panel-head">
+      <h2>向我咨询 <span class="consult-badge">{{ consults_recv | selectattr('status', 'equalto', 'pending') | list | length }}</span></h2>
+      <span class="cnt">回答后获得对方支付的积分酬劳</span>
+    </div>
+    {% for cs in consults_recv %}
+    <div class="consult-item">
+      <div class="ci-q">
+        <b>{{ cs['from_name'] }}</b> 就《{{ cs['doc_title'] }}》向你咨询（{{ cs['price'] }}积分）
+        <span class="ci-time">{{ cs['created_at'][:16] }}</span>
+        <p>{{ cs['question'] }}</p>
+      </div>
+      {% if cs['status'] == 'pending' %}
+      <form action="{{ url_for('answer_consult', cid=cs['id']) }}" method="post" class="ci-answer">
+        <textarea name="answer" rows="2" maxlength="500" placeholder="输入你的回答（5-500字），提交后积分立即到账" required></textarea>
+        <button type="submit" class="btn btn-primary btn-sm">回答并收款</button>
+      </form>
+      {% elif cs['status'] == 'answered' %}
+      <div class="ci-a"><b>我的回答：</b>{{ cs['answer'] }}<span class="tag-chip green">已结算 +{{ cs['price'] }}</span></div>
+      {% else %}
+      <div class="ci-a"><span class="tag-chip gray">对方已关闭并退款</span></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if consults_asked %}
+  <div class="panel">
+    <div class="panel-head"><h2>我的咨询</h2><span class="cnt">我发起的付费咨询</span></div>
+    {% for cs in consults_asked %}
+    <div class="consult-item">
+      <div class="ci-q">
+        我向 <b>{{ cs['to_name'] }}</b> 咨询《{{ cs['doc_title'] }}》（{{ cs['price'] }}积分）
+        <span class="ci-time">{{ cs['created_at'][:16] }}</span>
+        <p>{{ cs['question'] }}</p>
+      </div>
+      {% if cs['status'] == 'answered' %}
+      <div class="ci-a"><b>作者回答：</b>{{ cs['answer'] }}<span class="ci-time">{{ cs['answered_at'][:16] }}</span></div>
+      {% elif cs['status'] == 'pending' %}
+      <div class="ci-a">
+        <span class="tag-chip orange">等待作者回答</span>
+        <form action="{{ url_for('close_consult', cid=cs['id']) }}" method="post" style="display:inline;"
+              onsubmit="return confirm('关闭咨询并退回 {{ cs['price'] }} 积分？');">
+          <button type="submit" class="btn btn-ghost btn-sm">关闭并退款</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="ci-a"><span class="tag-chip gray">已关闭，{{ cs['price'] }}积分已退回</span></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ============ 我的上传记录 ============ -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>我的上传记录</h2>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('upload') }}">+ 上传新资料</a>
+    </div>
+
+    {% if items %}
+    {% for it in items %}
+    <div class="my-item">
+      <a class="cover" href="{{ url_for('detail', doc_id=it.id) }}">
+        {% if it.cover %}<img src="{{ url_for('uploaded_file', filename=it.cover) }}" alt="封面">
+        {% else %}<span class="noimg">无图片</span>{% endif %}
+      </a>
+      <div class="mi-main">
+        <h3><a href="{{ url_for('detail', doc_id=it.id) }}">{{ it.title }}</a></h3>
+        <div class="mi-meta">
+          <span class="tag-chip {{ {'pending':'orange','published':'green','rejected':'red','offline':'gray'}[it.status] }}">{{ it.status_cn }}</span>
+          <span>{{ it.industry }} · {{ it.province }}{{ it.city }} · 用途：{{ it.org_name }}{% if it.source_org %} / 来源：{{ it.source_org }}{% endif %}</span>
+          <span>{{ it.img_count }} 张图 · {{ it.views }} 次浏览 · 更新于 {{ it.updated_at }}</span>
+        </div>
+        {% if it.status == 'rejected' and it.reject_reason %}
+        <div class="reject-reason">驳回原因：{{ it.reject_reason }}（可修改后重新提交）</div>
+        {% endif %}
+      </div>
+      <div class="mi-ops">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('detail', doc_id=it.id) }}">查看</a>
+        {% if it.status in ('pending', 'rejected') %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('my_edit', doc_id=it.id) }}">修改</a>
+        <form action="{{ url_for('my_delete', doc_id=it.id) }}" method="post"
+              onsubmit="return confirm('确定删除该资料？删除后不可恢复');">
+          <button type="submit" class="btn btn-danger btn-sm">删除</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-box" style="box-shadow:none;">
+      <h3>还没有上传过资料</h3>
+      <p>你的一份样例，可能帮助更多人少走弯路</p>
+      <a class="btn btn-orange" href="{{ url_for('upload') }}">立即上传第一份资料</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.my-vip-bar { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+  background:linear-gradient(135deg,#fff,#f6f9fd); border:1.5px solid var(--line);
+  border-radius:16px; padding:14px 20px; margin-top:16px; }
+.mvb-l { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.mvb-pts { font-size:14px; color:var(--text-2); }
+.mvb-pts b { font-size:22px; color:#ff9d2e; font-weight:800; }
+.vip-tag { background:linear-gradient(135deg,#ffd166,#ff9d2e); color:#6b4e12; font-size:12px;
+  font-weight:700; padding:3px 12px; border-radius:20px; }
+.vip-tag.off { background:#eef1f5; color:#93a3b5; }
+.mvb-r { display:flex; gap:8px; flex-wrap:wrap; }
+.consult-badge { background:#ff4d4f; color:#fff; font-size:12px; min-width:20px; height:20px;
+  border-radius:10px; display:inline-grid; place-items:center; padding:0 6px; vertical-align:middle; }
+.consult-item { padding:14px 4px; border-bottom:1px solid var(--line); }
+.consult-item:last-child { border-bottom:none; }
+.ci-q { font-size:13.5px; color:var(--text-2); }
+.ci-q p { margin-top:6px; background:var(--bg-soft,#f6f9fd); border-radius:10px; padding:10px 14px;
+  font-size:14px; color:var(--text-1); line-height:1.7; }
+.ci-time { font-size:12px; color:var(--text-3); margin-left:8px; }
+.ci-answer { margin-top:10px; display:flex; gap:10px; align-items:flex-start; }
+.ci-answer textarea { flex:1; padding:10px 14px; border:1.5px solid var(--line); border-radius:10px;
+  font-size:13.5px; resize:vertical; font-family:inherit; }
+.ci-answer textarea:focus { outline:none; border-color:#2b7fff; }
+.ci-a { margin-top:10px; font-size:13.5px; color:var(--text-2); background:#f4fbf7;
+  border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.tag-chip.gray { background:#eef1f5; color:#93a3b5; }
+@media (max-width:640px) { .ci-answer { flex-direction:column; } .ci-answer .btn { align-self:flex-end; } }
+</style>
+{% endblock %}

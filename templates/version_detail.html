@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}版本 v{{ v['version_no'] }} - {{ v['title'] }} - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <div class="breadcrumb">
+    <a href="{{ url_for('index') }}">首页</a> ›
+    <a href="{{ url_for('detail', doc_id=doc['id']) }}">{{ doc['title'] }}</a> ›
+    <a href="{{ url_for('doc_versions', doc_id=doc['id']) }}">版本历史</a> ›
+    <span>v{{ v['version_no'] }}</span>
+  </div>
+
+  <div class="detail-grid">
+    <!-- 左侧：图片 -->
+    <div class="detail-left">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>参考图片（{{ images|length }} 张）</h2>
+          <span class="cnt">版本 v{{ v['version_no'] }}</span>
+        </div>
+        {% if images %}
+        <div class="detail-gallery" id="gallery">
+          {% for img in images %}
+          <div class="dg-item" data-idx="{{ loop.index0 }}">
+            <img src="{{ url_for('uploaded_file', filename=img['filename']) }}" alt="参考图片{{ loop.index }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box" style="box-shadow:none;padding:34px;"><h3>暂无图片</h3></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 右侧：信息 -->
+    <div class="detail-right">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>版本信息</h2>
+          <span class="tag-chip {{ {'pending':'orange','published':'green','rejected':'red','history':'gray'}[v['status']] }}">{{ status_cn }}</span>
+        </div>
+        <div class="info-list">
+          <div class="info-row"><span class="lab">资料名称</span><span class="val">{{ v['title'] }}</span></div>
+          <div class="info-row"><span class="lab">所属行业</span><span class="val">{{ ind['name'] if ind }}</span></div>
+          <div class="info-row"><span class="lab">地区</span><span class="val">{{ v['province'] }}{{ v['city'] }}{% if v['county'] %}{{ v['county'] }}{% endif %}</span></div>
+          <div class="info-row"><span class="lab">用途机构</span><span class="val">{{ v['org_name'] }}</span></div>
+          <div class="info-row"><span class="lab">来源机构</span><span class="val">{{ v['source_org'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">适用业务</span><span class="val">{{ v['business'] }}</span></div>
+          <div class="info-row"><span class="lab">资料类型</span><span class="val">{{ v['doc_type'] }}</span></div>
+          <div class="info-row"><span class="lab">关键词</span><span class="val">
+            {% for t in (v['tags'] or '').split('|') if t %}<span class="tag-chip">{{ t }}</span>{% endfor %}
+          </span></div>
+          <div class="info-row"><span class="lab">资料用途</span><span class="val">{{ v['purpose'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">获取方式</span><span class="val">{{ v['obtain_method'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">注意事项</span><span class="val">{{ v['notes'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">来源说明</span><span class="val">{{ v['source'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">适用时间</span><span class="val">{{ v['valid_period'] or '未填写' }}</span></div>
+          <div class="info-row"><span class="lab">提交者</span><span class="val">{{ author['nickname'] if author }}</span></div>
+          <div class="info-row"><span class="lab">提交时间</span><span class="val">{{ v['created_at'] }}</span></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-head"><h2>操作</h2></div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+          <a href="{{ url_for('detail', doc_id=doc['id']) }}" class="btn btn-primary btn-sm">查看当前版本</a>
+          <a href="{{ url_for('doc_versions', doc_id=doc['id']) }}" class="btn btn-outline btn-sm">返回版本列表</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.breadcrumb { margin-bottom:16px; font-size:13.5px; color:var(--text-3); }
+.breadcrumb a { color:var(--blue); }
+.detail-grid { display:grid; grid-template-columns: 1fr 380px; gap:20px; }
+@media (max-width:900px) { .detail-grid { grid-template-columns:1fr; } }
+.detail-gallery { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; padding:16px 20px; }
+.dg-item { border-radius:12px; overflow:hidden; cursor:pointer; border:2px solid transparent; transition:all .2s; }
+.dg-item:hover { border-color:var(--blue); transform:scale(1.02); }
+.dg-item img { width:100%; height:180px; object-fit:cover; }
+.info-list { padding:16px 20px; }
+.info-row { display:flex; margin-bottom:12px; font-size:13.5px; }
+.info-row .lab { width:90px; color:var(--text-3); flex-shrink:0; }
+.info-row .val { flex:1; color:var(--text); }
+.tag-chip { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11.5px; background:#eef2f7; color:var(--text-2); margin-right:6px; margin-bottom:4px; }
+.tag-chip.orange { background:#fff3e0; color:var(--orange-deep); }
+.tag-chip.green { background:#e5f8ec; color:var(--green); }
+.tag-chip.red { background:#fff1f0; color:var(--red); }
+.tag-chip.gray { background:#eef2f7; color:var(--text-3); }
+</style>
+{% endblock %}

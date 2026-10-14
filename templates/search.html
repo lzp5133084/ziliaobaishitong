@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}资料搜索 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- ============ 筛选区 ============ -->
+  <form class="filter-card" action="{{ url_for('search') }}" method="get">
+    <div class="filter-grid">
+      <div class="field" style="grid-column: 1 / -1; margin-bottom: 8px;">
+        <label>关键词</label>
+        <input type="text" name="kw" value="{{ f.kw }}" placeholder="搜索资料名称、机构、业务、标签……">
+      </div>
+      <div class="field">
+        <label>行业</label>
+        <select name="industry">
+          <option value="">全部行业</option>
+          {% for ind in industries %}
+          <option value="{{ ind['name'] }}" {{ 'selected' if f.industry == ind['name'] }}>{{ ind['name'] }}{{ '' if ind['is_open'] else '（未开放）' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>省份</label>
+        <input type="text" name="province" value="{{ f.province }}" list="dlProvince" placeholder="如：四川省">
+        <datalist id="dlProvince">
+          {% for p in provinces %}<option value="{{ p }}"></option>{% endfor %}
+        </datalist>
+      </div>
+      <div class="field">
+        <label>城市</label>
+        <input type="text" name="city" value="{{ f.city }}" list="dlCity" placeholder="如：泸州市">
+        <datalist id="dlCity">
+          {% for c in used_cities %}<option value="{{ c }}"></option>{% endfor %}
+        </datalist>
+      </div>
+      <div class="field">
+        <label>资料类型</label>
+        <input type="text" name="doc_type" value="{{ f.doc_type }}" list="dlType" placeholder="如：出院记录">
+        <datalist id="dlType">
+          {% for t in used_types %}<option value="{{ t }}"></option>{% endfor %}
+        </datalist>
+      </div>
+      {% if is_vip %}
+      <div class="field">
+        <label>排序（VIP权益）</label>
+        <select name="sort">
+          <option value="">默认发布时间</option>
+          <option value="views" {{ 'selected' if f.sort == 'views' }}>按浏览量</option>
+          <option value="updated" {{ 'selected' if f.sort == 'updated' }}>按更新时间</option>
+        </select>
+      </div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary" style="height:41px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2.4"/><path d="m20 20-3.5-3.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+        搜索
+      </button>
+    </div>
+  </form>
+
+  <!-- ============ 结果统计 ============ -->
+  {% if f.kw or f.industry or f.province or f.city or f.doc_type %}
+  <div class="result-count">
+    共找到 <b>{{ total }}</b> 条符合条件的资料
+    {% if f.kw %}· 关键词“{{ f.kw }}”{% endif %}
+    {% if f.province %}· {{ f.province }}{% endif %}
+    {% if f.city %}{{ f.city }}{% endif %}
+  </div>
+  {% else %}
+  <div class="result-count">全部公开资料 <b>{{ total }}</b> 条</div>
+  {% endif %}
+
+  <!-- ============ 结果列表 ============ -->
+  {% if items %}
+  <div class="doc-grid">
+    {% for it in items %}
+    <a class="doc-card" href="{{ url_for('detail', doc_id=it.id) }}">
+      <div class="doc-thumb">
+        {% if it.cover %}
+        <img src="{{ url_for('uploaded_file', filename=it.cover) }}" alt="{{ it.title }}" loading="lazy">
+        {% else %}
+        <span class="no-img"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10.5" r="1.8" stroke="currentColor" stroke-width="1.6"/><path d="m12 16 2.5-3 2 2.4 1.5-1.8L21 17" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+        {% endif %}
+      </div>
+      <div class="doc-body">
+        <h3>{{ it.title }}</h3>
+        <span style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="tag-chip">{{ it.industry }}</span>
+          {% if it.doc_type %}<span class="tag-chip green">{{ it.doc_type }}</span>{% endif %}
+        </span>
+        <div class="doc-meta" style="margin-top:8px;">
+          <span>{{ it.province }} · {{ it.city }}{% if it.county %} · {{ it.county }}{% endif %}</span>
+          <span>用途：{{ it.org_name }}{% if it.source_org %} · 来源：{{ it.source_org }}{% endif %}</span>
+        </div>
+        <div class="doc-foot">
+          <span>{{ it.updated_at[:10] }} 更新</span>
+          <span>{{ it.views }} 次浏览</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if pages > 1 %}
+  <div class="pager">
+    {% set args = {} %}
+    {% if page > 1 %}
+    <a href="{{ url_for('search', kw=f.kw, industry=f.industry, province=f.province, city=f.city, doc_type=f.doc_type, page=page-1) }}">‹ 上一页</a>
+    {% endif %}
+    <span class="cur">{{ page }} / {{ pages }}</span>
+    {% if page < pages %}
+    <a href="{{ url_for('search', kw=f.kw, industry=f.industry, province=f.province, city=f.city, doc_type=f.doc_type, page=page+1) }}">下一页 ›</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- ============ 空结果（真实提示，不伪造结果） ============ -->
+  <div class="empty-box">
+    <svg viewBox="0 0 96 96" fill="none">
+      <circle cx="48" cy="48" r="40" stroke="#dfe9f6" stroke-width="5"/>
+      <circle cx="41" cy="41" r="17" stroke="#b9cbe4" stroke-width="5"/>
+      <path d="m53 53 14 14" stroke="#b9cbe4" stroke-width="5" stroke-linecap="round"/>
+      <path d="M35 41h12M41 35v12" stroke="#d5e1f2" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <h3>没有找到符合条件的资料</h3>
+    <p>平台承诺：搜索不到时如实提示，绝不伪造结果。<br>换个关键词试试，或等待其他用户分享后再次查找。</p>
+    <a class="btn btn-orange" href="{{ url_for('upload') }}">我来上传这份资料</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑资料' if edit_id else '上传资料' }} - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- ============ 步骤指示 ============ -->
+  <div class="wizard-head" id="wizardHead">
+    <div class="wz-step active" data-step="1"><span class="wz-dot">1</span><span class="wz-label">选择分类</span></div>
+    <span class="wz-line"></span>
+    <div class="wz-step" data-step="2"><span class="wz-dot">2</span><span class="wz-label">上传图片</span></div>
+    <span class="wz-line"></span>
+    <div class="wz-step" data-step="3"><span class="wz-dot">3</span><span class="wz-label">脱敏处理</span></div>
+    <span class="wz-line"></span>
+    <div class="wz-step" data-step="4"><span class="wz-dot">4</span><span class="wz-label">填写说明</span></div>
+    <span class="wz-line"></span>
+    <div class="wz-step" data-step="5"><span class="wz-dot">5</span><span class="wz-label">预览提交</span></div>
+  </div>
+
+  <form id="docForm" action="{{ url_for('my_edit', doc_id=edit_id) if edit_id else url_for('upload') }}"
+        method="post" enctype="multipart/form-data">
+    <input type="file" name="images" id="imgInput" multiple
+           accept=".jpg,.jpeg,.png,.webp" style="display:none;">
+
+    <!-- ============ 第1步：选择分类 ============ -->
+    <div class="wz-pane active" data-pane="1">
+      <div class="pane-card">
+        <h3>基础分类信息</h3>
+        <div class="form-row">
+          <div class="field">
+            <label>所属行业<em>*</em></label>
+            <select name="industry_id" id="fIndustry" required onchange="loadCascade(this.value)">
+              <option value="">请选择行业</option>
+              {% for ind in industries %}
+              <option value="{{ ind['id'] }}" {{ 'selected' if form.get('industry_id')|string == ind['id']|string }}>{{ ind['name'] }}</option>
+              {% endfor %}
+            </select>
+            <div class="hint">当前仅开放已开放行业，更多行业后续开放</div>
+          </div>
+          <div class="field">
+            <label>用途机构<em>*</em></label>
+            <select name="org_name" id="fOrg" required>
+              <option value="">请先选择行业</option>
+            </select>
+            <input type="hidden" name="org_text" id="fOrgText" value="{{ form.get('org_name','') }}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>来源机构<em>*</em></label>
+            <input type="text" name="source_org" id="fSourceOrg" required maxlength="80"
+                   value="{{ form.get('source_org','') }}" placeholder="如：西南医科大学附属医院">
+            <div class="hint">出具该资料的机构（如医院、车管所、社保局等）</div>
+          </div>
+          <div class="field">
+            <label>省份<em>*</em></label>
+            <select name="province" id="fProvince" required>
+              <option value="">请选择省份</option>
+              {% for p in provinces %}
+              <option value="{{ p }}" {{ 'selected' if form.get('province') == p }}>{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>城市<em>*</em></label>
+            <input type="text" name="city" id="fCity" required maxlength="30"
+                   value="{{ form.get('city','') }}" placeholder="如：泸州市">
+          </div>
+          <div class="field">
+            <label>区县（选填）</label>
+            <input type="text" name="county" maxlength="30" value="{{ form.get('county','') }}" placeholder="如：江阳区">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>资料名称<em>*</em></label>
+            <input type="text" name="title" id="fTitle" required maxlength="80"
+                   value="{{ form.get('title','') }}" placeholder="如：出院记录样例">
+          </div>
+          <div class="field">
+            <label>适用业务<em>*</em></label>
+            <select name="business" id="fBusiness" required>
+              <option value="">请先选择行业</option>
+            </select>
+            <input type="hidden" name="business_text" id="fBusinessText" value="{{ form.get('business','') }}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>资料类型<em>*</em></label>
+            <select name="doc_type" id="fDocType" required>
+              <option value="">请先选择行业</option>
+            </select>
+            <input type="hidden" name="doc_type_text" id="fDocTypeText" value="{{ form.get('doc_type','') }}">
+          </div>
+          <div class="field">
+            <label>关键词标签<em>*</em></label>
+            <input type="text" name="tags" required maxlength="100"
+                   value="{{ form.get('tags','') }}" placeholder="如：出院记录,理赔,住院资料">
+          </div>
+        </div>
+        <div class="hint" style="margin-top:4px;">标签用于帮助其他用户搜索到这份资料</div>
+        <div class="wz-nav">
+          <span></span>
+          <button type="button" class="btn btn-primary" onclick="WZ.go(2)">下一步：上传图片 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 第2步：上传图片 ============ -->
+    <div class="wz-pane" data-pane="2">
+      <div class="pane-card">
+        <h3>上传参考图片 <span style="font-size:12.5px;color:var(--text-3);font-weight:400;">（支持 JPG/PNG/WebP，单张≤10MB，最多9张）</span></h3>
+
+        {% if edit_id and old_images %}
+        <div style="margin-bottom:14px;">
+          <div style="font-size:13.5px;font-weight:600;margin-bottom:8px;">已保存的图片（勾选即删除）</div>
+          <div class="img-stage">
+            {% for img in old_images %}
+            <div class="stage-item">
+              <div class="thumb"><img src="{{ url_for('uploaded_file', filename=img['filename']) }}" alt="旧图"></div>
+              <label style="display:flex;align-items:center;gap:5px;padding:6px 8px;font-size:12px;color:var(--red);cursor:pointer;">
+                <input type="checkbox" name="remove_img" value="{{ img['id'] }}" style="accent-color:var(--red);">删除此图
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="up-zone" id="upZone">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 32V12m0 0-9 9m9-9 9 9" stroke="#2b7fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 32v6a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-6" stroke="#2b7fff" stroke-width="3.5" stroke-linecap="round"/></svg>
+          <p><b>点击选择图片</b> 或将图片拖拽到此处</p>
+          <p class="hint">上传前请确认图片已脱敏，下一步将提供遮挡工具（身份证号、姓名、条码等务必遮挡）</p>
+          <input type="file" id="filePicker" multiple accept=".jpg,.jpeg,.png,.webp" style="display:none;">
+        </div>
+        <div class="img-stage" id="imgStage"></div>
+
+        <div class="wz-nav">
+          <button type="button" class="btn btn-ghost" onclick="WZ.go(1)">‹ 上一步</button>
+          <button type="button" class="btn btn-primary" onclick="WZ.go(3)">下一步：脱敏处理 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 第3步：脱敏处理 ============ -->
+    <div class="wz-pane" data-pane="3">
+      <div class="pane-card">
+        <h3>隐私脱敏（手动遮挡，不可逆）</h3>
+        <div class="mask-tools">
+          <span class="tip">在图片上<b>按住拖动</b>即可涂黑遮挡：身份证号、姓名、联系方式、住院号、条形码、二维码等。遮挡会直接写入像素，提交后<b>无法恢复</b>。</span>
+        </div>
+        {% if edit_id and old_images %}
+        <p style="font-size:12.5px;color:var(--text-3);margin-bottom:8px;">注：之前已保存的图片不再重复脱敏，本步骤仅处理新上传的图片。</p>
+        {% endif %}
+        <div class="mask-list" id="maskList"></div>
+        <div class="mask-canvas-wrap">
+          <canvas id="maskCanvas"></canvas>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" id="maskResetBtn">重置当前图片</button>
+          <span style="font-size:12.5px;color:var(--text-3);align-self:center;">未涂黑的图片将按原图上传（请确认其本身无敏感信息）</span>
+        </div>
+        <div class="wz-nav">
+          <button type="button" class="btn btn-ghost" onclick="WZ.go(2)">‹ 上一步</button>
+          <button type="button" class="btn btn-primary" onclick="WZ.go(4)">下一步：填写说明 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 第4步：填写说明 ============ -->
+    <div class="wz-pane" data-pane="4">
+      <div class="pane-card">
+        <h3>资料说明</h3>
+        <div class="field">
+          <label>资料用途<em>*</em></label>
+          <textarea name="purpose" required maxlength="500"
+                    placeholder="这份资料用在什么场景？如：用于向保险公司申请住院医疗理赔">{{ form.get('purpose','') }}</textarea>
+        </div>
+        <div class="field">
+          <label>获取方式<em>*</em></label>
+          <textarea name="obtain_method" required maxlength="500"
+                    placeholder="在哪里、如何获取？如：出院时向医院病案室申请打印，需携带患者身份证">{{ form.get('obtain_method','') }}</textarea>
+        </div>
+        <div class="field">
+          <label>注意事项（选填）</label>
+          <textarea name="notes" maxlength="500"
+                    placeholder="需要提醒其他用户的事情，如：不同医院格式略有差异，仅供形状参考">{{ form.get('notes','') }}</textarea>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>来源说明（选填）</label>
+            <input type="text" name="source" maxlength="100" value="{{ form.get('source','') }}"
+                   placeholder="如：本人2025年在XX医院住院时取得">
+          </div>
+          <div class="field">
+            <label>资料适用时间（选填）</label>
+            <input type="text" name="valid_period" maxlength="50" value="{{ form.get('valid_period','') }}"
+                   placeholder="如：2025年版">
+          </div>
+        </div>
+        <label class="privacy-check">
+          <input type="checkbox" id="privacyCheck" name="privacy_confirmed" value="1">
+          <span><b>隐私确认：</b>我已对图片中的个人敏感信息（姓名、身份证号、联系方式、住院号、条形码、二维码等）完成脱敏遮挡，或确认图片本身不含任何个人敏感信息。未确认无法提交。</span>
+        </label>
+        <div class="wz-nav">
+          <button type="button" class="btn btn-ghost" onclick="WZ.go(3)">‹ 上一步</button>
+          <button type="button" class="btn btn-primary" onclick="WZ.go(5)">下一步：预览提交 ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 第5步：预览提交 ============ -->
+    <div class="wz-pane" data-pane="5">
+      <div class="pane-card">
+        <h3>提交前预览</h3>
+        <div id="previewBox"></div>
+        <div class="wz-nav">
+          <button type="button" class="btn btn-ghost" onclick="WZ.go(4)">‹ 上一步</button>
+          <button type="submit" class="btn btn-orange btn-lg" id="submitBtn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            确认提交审核
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.UPLOAD_CFG = {
+  mode: {{ 'edit' if edit_id else 'create' }},
+  editId: {{ edit_id or 'null' }},
+  maxImages: 9
+};
+
+// ============ 级联分类加载 ============
+var cascadeData = null;
+
+function loadCascade(industryId) {
+  if (!industryId) {
+    document.getElementById('fOrg').innerHTML = '<option value="">请先选择行业</option>';
+    document.getElementById('fBusiness').innerHTML = '<option value="">请先选择行业</option>';
+    document.getElementById('fDocType').innerHTML = '<option value="">请先选择行业</option>';
+    return;
+  }
+  fetch('/api/categories/tree')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      var ind = null;
+      for (var i = 0; i < data.items.length; i++) {
+        if (data.items[i].id == industryId) { ind = data.items[i]; break; }
+      }
+      if (!ind) return;
+      // 机构
+      var orgSel = document.getElementById('fOrg');
+      orgSel.innerHTML = '<option value="">请选择机构</option>';
+      for (var i = 0; i < ind.orgs.length; i++) {
+        var o = ind.orgs[i];
+        var opt = document.createElement('option');
+        opt.value = o.name; opt.textContent = o.name;
+        orgSel.appendChild(opt);
+      }
+      // 业务
+      var bizSel = document.getElementById('fBusiness');
+      bizSel.innerHTML = '<option value="">请选择业务</option>';
+      for (var i = 0; i < ind.businesses.length; i++) {
+        var b = ind.businesses[i];
+        var opt = document.createElement('option');
+        opt.value = b.name; opt.textContent = b.name;
+        bizSel.appendChild(opt);
+      }
+      // 资料类型
+      var dtSel = document.getElementById('fDocType');
+      dtSel.innerHTML = '<option value="">请选择资料类型</option>';
+      for (var i = 0; i < ind.doc_types.length; i++) {
+        var d = ind.doc_types[i];
+        var opt = document.createElement('option');
+        opt.value = d.name; opt.textContent = d.name;
+        dtSel.appendChild(opt);
+      }
+      // 恢复编辑时的值
+      var orgText = document.getElementById('fOrgText').value;
+      var bizText = document.getElementById('fBusinessText').value;
+      var dtText = document.getElementById('fDocTypeText').value;
+      if (orgText) orgSel.value = orgText;
+      if (bizText) bizSel.value = bizText;
+      if (dtText) dtSel.value = dtText;
+    })
+    .catch(function(e) { console.error('级联加载失败', e); });
+}
+
+// 页面加载时，如果已选行业，自动加载级联
+document.addEventListener('DOMContentLoaded', function() {
+  var indSel = document.getElementById('fIndustry');
+  if (indSel && indSel.value) {
+    loadCascade(indSel.value);
+  }
+});
+</script>
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

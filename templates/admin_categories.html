@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}分类管理 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <div class="admin-tabs">
+    <a href="{{ url_for('admin') }}">资料审核</a>
+    <a href="{{ url_for('admin_categories') }}" class="on">分类管理</a>
+    <a href="{{ url_for('admin_feedback') }}">反馈管理</a>
+    <a href="{{ url_for('admin_users') }}">用户管理</a>
+    <a href="{{ url_for('admin') }}#logs">操作日志</a>
+  </div>
+
+  <!-- ============ 添加顶级行业 ============ -->
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-head"><h2>添加行业</h2></div>
+    <form action="{{ url_for('admin_category_add') }}" method="post" class="cat-add-form">
+      <input type="hidden" name="parent_id" value="0">
+      <input type="hidden" name="type" value="industry">
+      <input type="text" name="name" placeholder="行业名称，如：保险理赔" required maxlength="20">
+      <input type="number" name="sort" placeholder="排序" value="0" style="width:80px;">
+      <button type="submit" class="btn btn-primary btn-sm">添加行业</button>
+    </form>
+  </div>
+
+  <!-- ============ 分类树展示 ============ -->
+  {% for ind in industries %}
+  <div class="panel cat-panel" data-id="{{ ind['id'] }}">
+    <div class="cat-head">
+      <div class="cat-title">
+        <span class="cat-badge industry">行业</span>
+        <b>{{ ind['name'] }}</b>
+        <span class="cat-meta">排序:{{ ind['sort'] }} · {{ '启用' if ind['status'] else '禁用' }}</span>
+      </div>
+      <div class="cat-ops">
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit({{ ind['id'] }}, '{{ ind['name'] }}', {{ ind['sort'] }}, {{ ind['status'] }})">编辑</button>
+        <form action="{{ url_for('admin_category_del', cat_id=ind['id']) }}" method="post" style="display:inline;"
+              onsubmit="return confirm('确认删除该行业及其所有子分类？');">
+          <button type="submit" class="btn btn-danger btn-sm">删除</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 编辑表单（隐藏） -->
+    <div class="cat-edit-form" id="edit-{{ ind['id'] }}" style="display:none;">
+      <form action="{{ url_for('admin_category_edit', cat_id=ind['id']) }}" method="post">
+        <input type="text" name="name" value="{{ ind['name'] }}" required maxlength="20">
+        <input type="number" name="sort" value="{{ ind['sort'] }}" style="width:80px;">
+        <label><input type="checkbox" name="status" {{ 'checked' if ind['status'] }}> 启用</label>
+        <button type="submit" class="btn btn-primary btn-sm">保存</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEdit({{ ind['id'] }})">取消</button>
+      </form>
+    </div>
+
+    <!-- 子分类区域 -->
+    <div class="cat-children">
+      {% for type_key, type_name in [('org','机构'), ('business','业务'), ('doc_type','资料类型')] %}
+      <div class="cat-group">
+        <div class="cat-group-head">
+          <h3>{{ type_name }}</h3>
+          <form action="{{ url_for('admin_category_add') }}" method="post" class="cat-add-inline">
+            <input type="hidden" name="parent_id" value="{{ ind['id'] }}">
+            <input type="hidden" name="type" value="{{ type_key }}">
+            <input type="text" name="name" placeholder="添加{{ type_name }}" required maxlength="30">
+            <button type="submit" class="btn btn-outline btn-sm">+</button>
+          </form>
+        </div>
+        <div class="cat-list">
+          {% for c in tree.get(ind['id'], []) if c['type'] == type_key %}
+          <div class="cat-item" data-id="{{ c['id'] }}">
+            <span class="name">{{ c['name'] }}</span>
+            <span class="meta">排序:{{ c['sort'] }}</span>
+            <div class="ops">
+              <button class="btn-ico" onclick="toggleEdit({{ c['id'] }}, '{{ c['name'] }}', {{ c['sort'] }}, {{ c['status'] }})">✎</button>
+              <form action="{{ url_for('admin_category_del', cat_id=c['id']) }}" method="post" style="display:inline;"
+                    onsubmit="return confirm('确认删除该{{ type_name }}？');">
+                <button type="submit" class="btn-ico danger">✕</button>
+              </form>
+            </div>
+            <div class="cat-edit-form" id="edit-{{ c['id'] }}" style="display:none;">
+              <form action="{{ url_for('admin_category_edit', cat_id=c['id']) }}" method="post">
+                <input type="text" name="name" value="{{ c['name'] }}" required maxlength="30">
+                <input type="number" name="sort" value="{{ c['sort'] }}" style="width:70px;">
+                <label><input type="checkbox" name="status" {{ 'checked' if c['status'] }}> 启用</label>
+                <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEdit({{ c['id'] }})">取消</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if not industries %}
+  <div class="empty-box">
+    <h3>暂无行业分类</h3>
+    <p>请先添加行业，再添加机构、业务和资料类型</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+.cat-add-form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.cat-add-form input[type=text] { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; }
+.cat-add-form input[type=number] { padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; }
+.cat-panel { margin-bottom:20px; }
+.cat-head { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); }
+.cat-title { display:flex; align-items:center; gap:10px; font-size:16px; }
+.cat-badge { font-size:11px; padding:2px 8px; border-radius:999px; }
+.cat-badge.industry { background:var(--blue-light); color:var(--blue); }
+.cat-meta { font-size:12px; color:var(--text-3); }
+.cat-ops { display:flex; gap:8px; }
+.cat-edit-form { padding:12px 20px; background:#f8fbff; border-bottom:1px solid var(--line); }
+.cat-edit-form form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.cat-edit-form input[type=text] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; }
+.cat-edit-form input[type=number] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; width:70px; }
+.cat-children { padding:16px 20px; }
+.cat-group { margin-bottom:20px; }
+.cat-group-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.cat-group-head h3 { font-size:14px; font-weight:600; color:var(--text-2); }
+.cat-add-inline { display:flex; gap:6px; }
+.cat-add-inline input { padding:6px 12px; border:1.5px solid var(--line); border-radius:8px; font-size:13px; width:140px; }
+.cat-list { display:flex; flex-wrap:wrap; gap:8px; }
+.cat-item { background:#f8fbff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; position:relative; }
+.cat-item .name { font-size:13.5px; font-weight:500; }
+.cat-item .meta { font-size:11px; color:var(--text-3); }
+.cat-item .ops { display:flex; gap:4px; margin-left:6px; }
+.btn-ico { width:24px; height:24px; border-radius:6px; display:grid; place-items:center; font-size:12px; background:#eef2f7; color:var(--text-2); border:none; cursor:pointer; }
+.btn-ico:hover { background:var(--blue-light); color:var(--blue); }
+.btn-ico.danger:hover { background:#fff1f0; color:var(--red); }
+</style>
+
+<script>
+function toggleEdit(id, name, sort, status) {
+  var el = document.getElementById('edit-' + id);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+</script>
+{% endblock %}

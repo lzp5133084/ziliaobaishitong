@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2b7fff">
+<title>{% block title %}资料百事通 - 人人分享经验，人人找到答案{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+
+<!-- ============ 顶部导航 ============ -->
+<header class="header">
+  <div class="container header-inner">
+    <a class="logo" href="{{ url_for('index') }}">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h7M9 11.5h4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </span>
+      <span class="logo-text">资料<em>百事通</em></span>
+    </a>
+    <span class="slogan">人人分享经验 · 人人找到答案</span>
+    <nav class="nav">
+      <a href="{{ url_for('index') }}" class="{{ 'active' if request.path == '/' }}">首页</a>
+      <a href="{{ url_for('search') }}" class="{{ 'active' if request.path == '/search' }}">资料搜索</a>
+      <a href="{{ url_for('upload') }}" class="{{ 'active' if request.path == '/upload' }}">资料上传</a>
+      <a href="{{ url_for('bounty_hall') }}" class="{{ 'active' if request.path == '/bounty' }}">悬赏大厅</a>
+      <a href="{{ url_for('my') }}" class="{{ 'active' if request.path == '/my' }}">我的贡献</a>
+      {% if cur_user and cur_user['role'] == 'admin' %}
+      <a href="{{ url_for('admin') }}" class="{{ 'active' if request.path == '/admin' }}">管理后台</a>
+      {% endif %}
+    </nav>
+    <div class="header-right">
+      {% if cur_user %}
+        <a class="user-chip" href="{{ url_for('vip_center') }}" title="会员中心">
+          <span class="avatar">{{ cur_user['nickname'][:1] }}</span>
+          <span>{{ cur_user['nickname'] }}</span>
+          {% if cur_vip %}<span class="vip-badge">VIP</span>{% endif %}
+        </a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('logout') }}">退出</a>
+      {% else %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('login') }}">登录</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('register') }}">注册</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<!-- ============ 提示消息 ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="container flash-box">
+    {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<!-- ============ 页脚（程序信息：版本/大小/最后保存/作者） ============ -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="f-brand">
+      <span class="logo-icon" style="width:30px;height:30px;border-radius:9px;">
+        <svg viewBox="0 0 24 24" fill="none" style="width:17px;height:17px;"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5z" stroke="#fff" stroke-width="2"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" stroke="#fff" stroke-width="2"/></svg>
+      </span>
+      资料百事通
+    </div>
+    <div class="f-info">
+      <b>{{ APP_VERSION }}</b> · 程序大小：<b>{{ APP_SIZE_MB }} MB</b> · 最后保存：<b>{{ APP_LAST_SAVE }}</b><br>
+      作者：<b>{{ APP_AUTHOR }}</b> · 微信：<b>{{ APP_WECHAT }}</b> · 平台资料由用户共创分享，仅供参考，不保证符合具体机构最新要求
+    </div>
+  </div>
+</footer>
+
+<!-- ============ 移动端底部导航 ============ -->
+<nav class="m-nav">
+  <div class="m-nav-inner">
+    <a href="{{ url_for('index') }}" class="{{ 'active' if request.path == '/' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V21H3V10.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>首页</a>
+    <a href="{{ url_for('search') }}" class="{{ 'active' if request.path == '/search' }}">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>搜索</a>
+    <a href="{{ url_for('upload') }}"><span class="up-btn">+</span>上传</a>
+    <a href="{{ url_for('my') }}" class="{{ 'active' if request.path == '/my' }}">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>我的</a>
+  </div>
+</nav>
+
+<!-- ============ 图片灯箱 ============ -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">×</button>
+  <button class="lb-nav lb-prev" id="lbPrev">‹</button>
+  <img id="lbImg" src="" alt="查看大图">
+  <button class="lb-nav lb-next" id="lbNext">›</button>
+  <div class="lb-count" id="lbCount"></div>
+</div>
+
+<style>
+.vip-badge { background:linear-gradient(135deg,#ffd166,#ff9d2e); color:#6b4e12; font-size:10.5px;
+  font-weight:800; padding:1px 7px; border-radius:10px; margin-left:2px; }
+.user-chip { text-decoration:none; }
+</style>
+<script>
+/* 全局站点数据（供JS使用） */
+window.SITE = { isLogin: {{ 'true' if cur_user else 'false' }} };
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

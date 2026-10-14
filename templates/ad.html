@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}广告激励 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <div class="ad-hero">
+    <h2>看激励广告 · 赚贡献积分</h2>
+    <p>Demo阶段为模拟广告位，接入真实广告平台后收益将用于平台运营。积分可用于开通VIP会员、付费咨询作者、发布需求悬赏。</p>
+    <div class="ad-progress">
+      今日已领取 <b>{{ today_ads }}</b> / {{ ad_limit }} 次 · 每次 <b>+{{ ad_reward }}</b> 积分 · 当前积分 <b>{{ points }}</b>
+    </div>
+  </div>
+
+  <!-- ============ 模拟广告位 ============ -->
+  <div class="ad-slot" id="adSlot">
+    <div class="ad-badge">广告</div>
+    <div class="ad-body" id="adBody">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="3" stroke="#93a3b5" stroke-width="1.8"/><path d="m10 9.5 5 2.5-5 2.5v-5z" fill="#93a3b5"/></svg>
+      <h3>点击下方按钮观看广告</h3>
+      <p>观看完成即可领取 +{{ ad_reward }} 积分奖励</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px;">
+    {% if today_ads < ad_limit %}
+    <button class="btn btn-orange" id="watchBtn" onclick="watchAd()">观看广告并领取 +{{ ad_reward }} 积分</button>
+    {% else %}
+    <button class="btn btn-ghost" disabled>今日已达上限（{{ ad_limit }}次/天），明天再来吧</button>
+    {% endif %}
+  </div>
+
+  <!-- 隐藏的领取表单 -->
+  <form id="claimForm" action="{{ url_for('ad_claim') }}" method="post" style="display:none;"></form>
+
+  <div class="panel" style="margin-top:26px;">
+    <div class="panel-head"><h2>更多积分获取方式</h2></div>
+    <div class="earn-grid">
+      <div class="earn-item"><b>+10</b><span>上传资料审核通过</span></div>
+      <div class="earn-item"><b>+5</b><span>提交资料新版本</span></div>
+      <div class="earn-item"><b>+2</b><span>纠错反馈被采纳</span></div>
+      <div class="earn-item"><b>+1</b><span>参与社区讨论</span></div>
+      <div class="earn-item"><b>+{{ ad_reward }}</b><span>每日广告激励 ×{{ ad_limit }}</span></div>
+      <div class="earn-item"><b>+悬赏</b><span>应征悬赏被采纳</span></div>
+    </div>
+    <div style="margin-top:16px;text-align:center;">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('upload') }}">去上传资料</a>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('bounty_hall') }}">去应征悬赏</a>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('vip_center') }}">返回会员中心</a>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.ad-hero { background:linear-gradient(135deg,#0f2a4a,#1d4f86 60%,#2b7fff); color:#fff;
+  border-radius:22px; padding:30px; margin-top:18px; text-align:center;
+  box-shadow:0 12px 34px rgba(20,60,120,.25); }
+.ad-hero h2 { font-size:22px; font-weight:800; }
+.ad-hero p { font-size:13.5px; opacity:.88; margin-top:8px; max-width:640px; margin-left:auto; margin-right:auto; line-height:1.8; }
+.ad-progress { margin-top:14px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2);
+  display:inline-block; padding:8px 20px; border-radius:30px; font-size:13.5px; }
+.ad-progress b { color:#ffd166; }
+.ad-slot { position:relative; margin-top:22px; border-radius:20px; background:#fff;
+  border:2px dashed var(--line); min-height:260px; display:grid; place-items:center; overflow:hidden; }
+.ad-badge { position:absolute; top:12px; left:12px; background:#f2f4f8; color:#93a3b5;
+  font-size:11px; padding:2px 8px; border-radius:6px; }
+.ad-body { text-align:center; color:var(--text-3); padding:30px; }
+.ad-body svg { width:56px; height:56px; margin-bottom:10px; }
+.ad-body h3 { font-size:17px; color:var(--text-2); }
+.ad-body p { font-size:13px; margin-top:6px; }
+.ad-playing { width:100%; max-width:560px; }
+.ad-playing .ad-video { border-radius:14px; overflow:hidden; }
+.ad-playing video, .ad-playing .ad-fake { width:100%; display:block; }
+.ad-fake { height:280px; background:linear-gradient(120deg,#2b7fff,#22b573,#ff9d2e,#a55eea,#2b7fff);
+  background-size:300% 300%; animation:adflow 4s linear infinite; display:grid; place-items:center;
+  color:#fff; font-size:20px; font-weight:800; letter-spacing:2px; }
+@keyframes adflow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.ad-countdown { margin-top:12px; text-align:center; font-size:14px; color:var(--text-2); }
+.ad-countdown b { color:#ff9d2e; font-size:18px; }
+.earn-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+.earn-item { background:var(--bg-soft,#f6f9fd); border-radius:12px; padding:14px; text-align:center; }
+.earn-item b { display:block; font-size:19px; color:#2b7fff; font-weight:800; }
+.earn-item span { font-size:12px; color:var(--text-3); }
+</style>
+
+<script>
+function watchAd() {
+  var body = document.getElementById('adBody');
+  var btn = document.getElementById('watchBtn');
+  if (btn) btn.disabled = true;
+  var sec = 3;
+  body.innerHTML = '<div class="ad-playing">' +
+    '<div class="ad-fake">资料百事通 · 共创美好生活</div>' +
+    '<div class="ad-countdown">广告播放中 <b id="adSec">' + sec + '</b> 秒，完成后自动领取奖励…</div></div>';
+  var timer = setInterval(function () {
+    sec--;
+    if (sec <= 0) {
+      clearInterval(timer);
+      document.getElementById('claimForm').submit();
+    } else {
+      var el = document.getElementById('adSec');
+      if (el) el.textContent = sec;
+    }
+  }, 1000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+# 运行时数据
+ziliaobaishitong.db
+ziliaobaishitong.db-journal
+secret_key.txt
+
+# 用户上传文件（运行时生成，含脱敏后图片）
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 临时/调试文件
+_*.py
+*.log

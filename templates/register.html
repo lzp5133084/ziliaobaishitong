@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}注册 - 资料百事通{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>注册账号</h2>
+    <p class="sub">加入资料百事通，分享经验帮助更多人</p>
+    <form action="{{ url_for('register') }}" method="post">
+      <div class="field">
+        <label>用户名<em>*</em></label>
+        <input type="text" name="username" required minlength="3" maxlength="20" placeholder="3-20个字符，注册后不可修改">
+      </div>
+      <div class="field">
+        <label>昵称<em>*</em></label>
+        <input type="text" name="nickname" required maxlength="20" placeholder="展示在资料详情页的作者昵称">
+      </div>
+      <div class="field">
+        <label>所在地区（选填）</label>
+        <input type="text" name="region" maxlength="30" placeholder="如：四川省泸州市">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>密码<em>*</em></label>
+          <input type="password" name="password" required minlength="6" placeholder="至少6位">
+        </div>
+        <div class="field">
+          <label>确认密码<em>*</em></label>
+          <input type="password" name="password2" required minlength="6" placeholder="再次输入密码">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:6px;">注 册</button>
+    </form>
+    <div class="auth-foot">已有账号？<a href="{{ url_for('login') }}">直接登录</a></div>
+  </div>
+</div>
+{% endblock %}

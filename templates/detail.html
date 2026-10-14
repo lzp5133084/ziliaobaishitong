@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% block title %}{{ d['title'] }} - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="margin-top:18px;font-size:13px;color:var(--text-3);">
+    <a href="{{ url_for('index') }}">首页</a> ›
+    <a href="{{ url_for('search') }}">资料搜索</a> ›
+    <span style="color:var(--text-2);">{{ d['title'] }}</span>
+  </div>
+
+  <div class="detail-wrap">
+    <!-- ============ 左侧：参考图片 ============ -->
+    <div class="gallery">
+      {% if images %}
+      <div class="main-img" id="galMain">
+        <img id="galImg" src="{{ url_for('uploaded_file', filename=images[0]['filename']) }}" alt="参考图片1">
+        {% if images | length > 1 %}
+        <button class="gal-nav gal-prev" id="galPrev">‹</button>
+        <button class="gal-nav gal-next" id="galNext">›</button>
+        <span class="gal-count" id="galCount">1 / {{ images | length }}</span>
+        {% endif %}
+      </div>
+      {% if images | length > 1 %}
+      <div class="thumbs" id="galThumbs">
+        {% for img in images %}
+        <img src="{{ url_for('uploaded_file', filename=img['filename']) }}" data-idx="{{ loop.index0 }}"
+             class="{{ 'active' if loop.index0 == 0 }}" alt="缩略图{{ loop.index }}">
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div style="font-size:12px;color:var(--text-3);margin-top:10px;display:flex;gap:14px;">
+        <span>共 {{ images | length }} 张参考图</span>
+        <span>点击图片可放大查看</span>
+      </div>
+      {% else %}
+      <div class="empty-box" style="padding:40px;"><h3>暂无图片</h3></div>
+      {% endif %}
+    </div>
+
+    <!-- ============ 右侧：资料信息 ============ -->
+    <div class="info-card">
+      <h1>{{ d['title'] }}</h1>
+      <div class="info-tags">
+        <span class="tag-chip">{{ ind['name'] }}</span>
+        {% if d['doc_type'] %}<span class="tag-chip green">{{ d['doc_type'] }}</span>{% endif %}
+        {% for t in item.tags %}<span class="tag-chip orange"># {{ t }}</span>{% endfor %}
+      </div>
+
+      <div class="meta-grid">
+        <div class="m-item"><span class="k">所属行业：</span><span class="v">{{ ind['name'] }}</span></div>
+        <div class="m-item"><span class="k">适用业务：</span><span class="v">{{ d['business'] }}</span></div>
+        <div class="m-item"><span class="k">所在地区：</span><span class="v">{{ d['province'] }} {{ d['city'] }}{% if d['county'] %} {{ d['county'] }}{% endif %}</span></div>
+        <div class="m-item"><span class="k">用途机构：</span><span class="v">{{ d['org_name'] }}</span></div>
+        <div class="m-item"><span class="k">来源机构：</span><span class="v">{{ d['source_org'] or '未填写' }}</span></div>
+        <div class="m-item"><span class="k">资料类型：</span><span class="v">{{ d['doc_type'] or '未填写' }}</span></div>
+        <div class="m-item"><span class="k">更新时间：</span><span class="v">{{ d['updated_at'] }}</span></div>
+        <div class="m-item"><span class="k">浏览次数：</span><span class="v">{{ d['views'] }} 次</span></div>
+        <div class="m-item"><span class="k">当前状态：</span><span class="v">
+          {% if d['status'] == 'published' %}<span class="tag-chip green">已发布</span>
+          {% elif d['status'] == 'pending' %}<span class="tag-chip orange">待审核</span>
+          {% elif d['status'] == 'rejected' %}<span class="tag-chip red">已驳回</span>
+          {% else %}<span class="tag-chip gray">已下架</span>{% endif %}
+        </span></div>
+      </div>
+
+      {% if d['status'] == 'rejected' and d['reject_reason'] %}
+      <div class="reject-reason" style="margin-top:12px;">驳回原因：{{ d['reject_reason'] }}</div>
+      {% endif %}
+
+      <div class="desc-block">
+        <h4>资料用途</h4>
+        <p>{{ d['purpose'] or '未填写' }}</p>
+      </div>
+      <div class="desc-block">
+        <h4>获取方式</h4>
+        <p>{{ d['obtain_method'] or '未填写' }}</p>
+      </div>
+      {% if d['notes'] %}
+      <div class="desc-block">
+        <h4>注意事项</h4>
+        <p>{{ d['notes'] }}</p>
+      </div>
+      {% endif %}
+      {% if d['source'] %}
+      <div class="desc-block">
+        <h4>来源说明</h4>
+        <p>{{ d['source'] }}</p>
+      </div>
+      {% endif %}
+      {% if d['valid_period'] %}
+      <div class="desc-block">
+        <h4>资料适用时间</h4>
+        <p>{{ d['valid_period'] }}</p>
+      </div>
+      {% endif %}
+
+      <div class="author-box">
+        <span class="avatar">{{ author['nickname'][:1] }}</span>
+        <div style="flex:1;">
+          <b><a href="{{ url_for('author_profile', user_id=author['id']) }}" style="color:inherit;">{{ author['nickname'] }}</a></b>
+          <span>已发布 {{ author_docs }} 条资料{% if author['region'] %} · {{ author['region'] }}{% endif %} · {{ author['created_at'][:10] }} 加入</span>
+        </div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('upload') }}">我也上传类似资料</a>
+      </div>
+
+      <!-- V1.0: 版本与反馈操作区 -->
+      <div class="doc-actions">
+        <a href="{{ url_for('doc_versions', doc_id=d['id']) }}" class="btn btn-outline btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          版本历史
+        </a>
+        {% if cur_user %}
+        <button class="btn btn-outline btn-sm" onclick="showFeedback('helpful')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          有帮助
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="showFeedback('error')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m15 9-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          内容有误
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="showFeedback('outdated')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          已过时
+        </button>
+        <a href="{{ url_for('new_version', doc_id=d['id']) }}" class="btn btn-orange btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+          提交新版
+        </a>
+        {% if cur_user['id'] != d['user_id'] %}
+        <button class="btn btn-vip btn-sm" onclick="showConsult()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 12a8 8 0 0 1-8 8H4l2.3-2.9A8 8 0 1 1 21 12z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          付费咨询作者
+        </button>
+        {% endif %}
+        {% if cur_vip or cur_user['role'] == 'admin' %}
+        <a href="{{ url_for('doc_download', doc_id=d['id']) }}" class="btn btn-outline btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          打包下载
+        </a>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- V3.0 付费咨询弹窗 -->
+      {% if cur_user and cur_user['id'] != d['user_id'] and d['status'] == 'published' %}
+      <div class="fb-modal" id="csModal" style="display:none;">
+        <div class="fb-modal-content">
+          <h3>付费咨询作者</h3>
+          <p class="cs-tip">向 <b>{{ author['nickname'] }}</b> 提问需支付 <b class="cs-price">10 积分</b>；作者回答后积分结算给作者，未回答可随时关闭退款。</p>
+          <form action="{{ url_for('post_consult', doc_id=d['id']) }}" method="post">
+            <div class="fb-reason-box" style="display:block;">
+              <label>你的问题（5-300字）</label>
+              <textarea name="question" rows="3" maxlength="300" placeholder="例：请问办理时需要提前预约吗？工作日几点可以取？" required></textarea>
+            </div>
+            <div class="fb-modal-ops">
+              <button type="submit" class="btn btn-primary btn-sm">支付并提交</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="hideConsult()">取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 反馈弹窗 -->
+      <div class="fb-modal" id="fbModal" style="display:none;">
+        <div class="fb-modal-content">
+          <h3 id="fbTitle">提交反馈</h3>
+          <form action="{{ url_for('submit_feedback', doc_id=d['id']) }}" method="post" id="fbForm">
+            <input type="hidden" name="type" id="fbType" value="">
+            <div class="fb-reason-box" id="fbReasonBox" style="display:none;">
+              <label>请说明理由（必填）</label>
+              <textarea name="reason" id="fbReason" rows="3" placeholder="请描述问题或过时原因..."></textarea>
+            </div>
+            <div class="fb-modal-ops">
+              <button type="submit" class="btn btn-primary btn-sm">确认提交</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="hideFeedback()">取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="status-line">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#93a3b5" stroke-width="2"/><path d="m8.5 12.5 2.5 2.5 4.5-5" stroke="#93a3b5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        平台提示：资料由用户分享，仅供参考，不保证符合具体机构最新要求，请以办理机构实际要求为准。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ V2.0 社区讨论区 ============ -->
+  <div class="dis-wrap" id="discussion">
+    <div class="dis-head">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 12a8 8 0 0 1-8 8H4l2.3-2.9A8 8 0 1 1 21 12z" stroke="#2b7fff" stroke-width="2" stroke-linejoin="round"/></svg>
+        社区讨论 <span class="dis-count">{{ discussions | length }}</span>
+      </h2>
+      {% if cur_user %}<span class="dis-quota">今日剩余发言额度：<b>{{ quota_left }}</b> 条</span>{% endif %}
+    </div>
+
+    {% if cur_user and d['status'] == 'published' %}
+    <form class="dis-form" action="{{ url_for('post_discussion', doc_id=d['id']) }}" method="post">
+      <input type="hidden" name="parent_id" id="disParentId" value="0">
+      <div class="dis-reply-tip" id="disReplyTip" style="display:none;">
+        回复 <b id="disReplyTo"></b> <a href="javascript:void(0)" onclick="cancelReply()">取消回复</a>
+      </div>
+      <textarea name="content" id="disContent" rows="3" maxlength="500"
+                placeholder="分享你的办理经验、提问或补充说明（5-500字）……"></textarea>
+      <div class="dis-form-bar">
+        <span class="dis-hint">文明交流，分享真实经验。发言 +1 贡献积分</span>
+        <button type="submit" class="btn btn-primary btn-sm">发表讨论</button>
+      </div>
+    </form>
+    {% elif not cur_user %}
+    <div class="dis-login-tip">
+      <a href="{{ url_for('login', next=request.path) }}">登录</a> 后参与讨论，分享你的经验
+    </div>
+    {% endif %}
+
+    {% if discussions %}
+    <div class="dis-list">
+      {% for ds in discussions %}
+      <div class="dis-item {{ 'dis-reply' if ds['parent_id'] }} {{ 'dis-hidden' if ds['status'] == 'hidden' }}" id="dis-{{ ds['id'] }}">
+        <span class="avatar dis-avatar">{{ ds['nickname'][:1] }}</span>
+        <div class="dis-body">
+          <div class="dis-meta">
+            <b>{{ ds['nickname'] }}</b>
+            <span class="lv-badge">{{ ds['level_name'] }}</span>
+            {% if ds['is_author'] %}<span class="author-badge">作者</span>{% endif %}
+            {% if ds['status'] == 'hidden' %}<span class="tag-chip red">已隐藏</span>{% endif %}
+            <span class="dis-time">{{ ds['created_at'] }}</span>
+          </div>
+          {% if ds['parent_id'] %}
+          <div class="dis-quote">回复 #{{ ds['parent_id'] }}</div>
+          {% endif %}
+          <p class="dis-content">{{ ds['content'] }}</p>
+          <div class="dis-ops">
+            {% if cur_user and d['status'] == 'published' and ds['status'] == 'published' %}
+            <a href="javascript:void(0)" onclick="replyTo({{ ds['id'] }}, '{{ ds['nickname'] }}')">回复</a>
+            {% endif %}
+            {% if cur_user and (cur_user['id'] == ds['user_id'] or cur_user['role'] == 'admin') %}
+            <form action="{{ url_for('delete_discussion', dis_id=ds['id']) }}" method="post" style="display:inline;"
+                  onsubmit="return confirm('确认删除该讨论及其回复？')">
+              <button type="submit" class="dis-op-btn">删除</button>
+            </form>
+            {% endif %}
+            {% if cur_user and cur_user['role'] == 'admin' %}
+            <form action="{{ url_for('admin_hide_discussion', dis_id=ds['id']) }}" method="post" style="display:inline;">
+              <button type="submit" class="dis-op-btn">{{ '恢复' if ds['status'] == 'hidden' else '隐藏' }}</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box" style="padding:30px;">
+      <h3>还没有讨论</h3>
+      <p>来分享你的办理经验，帮助更多人少走弯路</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.dis-wrap { background:#fff; border-radius:20px; padding:26px; margin-top:22px; box-shadow:0 4px 20px rgba(30,80,160,.06); }
+.dis-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+.dis-head h2 { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.dis-count { background:var(--blue-bg,#e8f2ff); color:#2b7fff; font-size:13px; padding:2px 10px; border-radius:20px; }
+.dis-quota { font-size:13px; color:var(--text-3); }
+.dis-quota b { color:#ff9d2e; }
+.dis-form textarea { width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; font-size:14px; resize:vertical; font-family:inherit; }
+.dis-form textarea:focus { outline:none; border-color:#2b7fff; }
+.dis-form-bar { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+.dis-hint { font-size:12.5px; color:var(--text-3); }
+.dis-reply-tip { background:#e8f2ff; border-radius:8px; padding:8px 12px; font-size:13px; margin-bottom:10px; }
+.dis-reply-tip a { color:#f43f3f; margin-left:8px; }
+.dis-login-tip { text-align:center; padding:18px; background:var(--bg-soft,#f6f9fd); border-radius:12px; font-size:14px; color:var(--text-2); }
+.dis-login-tip a { color:#2b7fff; font-weight:600; }
+.dis-list { margin-top:20px; display:flex; flex-direction:column; gap:16px; }
+.dis-item { display:flex; gap:12px; }
+.dis-item.dis-reply { margin-left:44px; padding-left:16px; border-left:3px solid var(--line); }
+.dis-item.dis-hidden { opacity:.55; }
+.dis-avatar { flex-shrink:0; width:38px; height:38px; font-size:15px; }
+.dis-body { flex:1; min-width:0; }
+.dis-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+.lv-badge { background:linear-gradient(135deg,#fff2df,#ffe3b8); color:#b26a00; font-size:11.5px; padding:1px 8px; border-radius:12px; font-weight:600; }
+.author-badge { background:linear-gradient(135deg,#e8f2ff,#cfe4ff); color:#1d63d8; font-size:11.5px; padding:1px 8px; border-radius:12px; font-weight:600; }
+.dis-time { font-size:12px; color:var(--text-3); }
+.dis-quote { font-size:12px; color:var(--text-3); background:var(--bg-soft,#f6f9fd); border-radius:6px; padding:3px 8px; display:inline-block; margin-bottom:4px; }
+.dis-content { font-size:14px; line-height:1.7; color:var(--text-1); word-break:break-word; white-space:pre-wrap; }
+.dis-ops { margin-top:6px; display:flex; gap:14px; font-size:12.5px; }
+.dis-ops a { color:#2b7fff; }
+.dis-op-btn { background:none; border:none; color:var(--text-3); font-size:12.5px; cursor:pointer; padding:0; }
+.dis-op-btn:hover { color:#f43f3f; }
+@media (max-width:640px) { .dis-item.dis-reply { margin-left:20px; } .dis-wrap { padding:18px; } }
+</style>
+
+<script>
+function replyTo(id, nickname) {
+  document.getElementById('disParentId').value = id;
+  document.getElementById('disReplyTo').textContent = nickname;
+  document.getElementById('disReplyTip').style.display = 'block';
+  document.getElementById('disContent').focus();
+}
+function cancelReply() {
+  document.getElementById('disParentId').value = 0;
+  document.getElementById('disReplyTip').style.display = 'none';
+}
+</script>
+
+<style>
+.doc-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+.fb-modal { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:grid; place-items:center; }
+.fb-modal-content { background:#fff; border-radius:20px; padding:24px; width:90%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+.fb-modal-content h3 { font-size:18px; font-weight:700; margin-bottom:16px; }
+.fb-reason-box { margin-bottom:16px; }
+.fb-reason-box label { display:block; font-size:13.5px; font-weight:600; margin-bottom:6px; }
+.fb-reason-box textarea { width:100%; padding:10px 14px; border:1.5px solid var(--line); border-radius:10px; font-size:13.5px; resize:vertical; }
+.fb-modal-ops { display:flex; gap:10px; justify-content:flex-end; }
+.btn-vip { background:linear-gradient(135deg,#6b4e12,#a67c1e); color:#ffd166; border:none; }
+.btn-vip:hover { opacity:.9; }
+.cs-tip { font-size:13px; color:var(--text-2); background:var(--bg-soft,#f6f9fd); border-radius:10px;
+  padding:10px 14px; margin-bottom:14px; line-height:1.7; }
+.cs-price { color:#ff9d2e; }
+</style>
+
+<script>
+function showFeedback(type) {
+  var modal = document.getElementById('fbModal');
+  var title = document.getElementById('fbTitle');
+  var typeInput = document.getElementById('fbType');
+  var reasonBox = document.getElementById('fbReasonBox');
+  typeInput.value = type;
+  if (type === 'helpful') {
+    title.textContent = '确认该资料对您有帮助？';
+    reasonBox.style.display = 'none';
+  } else if (type === 'error') {
+    title.textContent = '反馈内容有误';
+    reasonBox.style.display = 'block';
+  } else if (type === 'outdated') {
+    title.textContent = '反馈资料已过时';
+    reasonBox.style.display = 'block';
+  }
+  modal.style.display = 'grid';
+}
+function hideFeedback() {
+  document.getElementById('fbModal').style.display = 'none';
+  document.getElementById('fbForm').reset();
+}
+document.getElementById('fbModal').addEventListener('click', function(e) {
+  if (e.target === this) hideFeedback();
+});
+function showConsult() { var m = document.getElementById('csModal'); if (m) m.style.display = 'grid'; }
+function hideConsult() { var m = document.getElementById('csModal'); if (m) m.style.display = 'none'; }
+var csM = document.getElementById('csModal');
+if (csM) csM.addEventListener('click', function(e) { if (e.target === this) hideConsult(); });
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ---------- 详情页图片切换 + 灯箱 ---------- */
+(function () {
+  var imgs = {{ img_names | tojson }};
+  if (!imgs.length) return;
+  var idx = 0;
+  var galImg = document.getElementById('galImg');
+  var galCount = document.getElementById('galCount');
+  var thumbs = document.querySelectorAll('#galThumbs img');
+
+  function show(i) {
+    idx = (i + imgs.length) % imgs.length;
+    galImg.src = '/uploads/' + imgs[idx];
+    if (galCount) galCount.textContent = (idx + 1) + ' / ' + imgs.length;
+    thumbs.forEach(function (t, j) { t.classList.toggle('active', j === idx); });
+  }
+  var prev = document.getElementById('galPrev'), next = document.getElementById('galNext');
+  if (prev) prev.onclick = function (e) { e.stopPropagation(); show(idx - 1); };
+  if (next) next.onclick = function (e) { e.stopPropagation(); show(idx + 1); };
+  thumbs.forEach(function (t) { t.onclick = function () { show(+this.dataset.idx); }; });
+
+  if (window.initLightbox) {
+    window.initLightbox(imgs, function () { return idx; }, function (i) { show(i); });
+    document.getElementById('galMain').addEventListener('click', function () { window.openLightbox(idx); });
+  }
+})();
+</script>
+{% endblock %}

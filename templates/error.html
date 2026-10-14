@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}提示 {{ code }} - 资料百事通{% endblock %}
+{% block content %}
+<div class="err-wrap">
+  <div class="err-code">{{ code }}</div>
+  <h2>{{ message }}</h2>
+  <p>如果反复出现此提示，请联系管理员（微信：{{ APP_WECHAT }}）</p>
+  <div style="display:flex;gap:12px;justify-content:center;">
+    <a class="btn btn-primary" href="{{ url_for('index') }}">返回首页</a>
+    <a class="btn btn-ghost" href="{{ url_for('search') }}">去搜索资料</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}会员中心 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- ============ 会员状态卡 ============ -->
+  <div class="vip-hero {{ 'is-vip' if vip }}">
+    <div class="vip-hero-l">
+      {% if vip %}
+      <div class="vip-crown">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l-1-9 5 3.5L12 5l5 6.5L22 8l-1 9H3z" fill="#ffd166" stroke="#b8860b" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h2>VIP会员 <span class="vip-status-on">生效中</span></h2>
+        <p>有效期至 <b>{{ vip['expire_at'][:10] }}</b> · 再次开通自动顺延</p>
+      </div>
+      {% else %}
+      <div class="vip-crown off">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l-1-9 5 3.5L12 5l5 6.5L22 8l-1 9H3z" stroke="#93a3b5" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h2>开通 VIP 会员</h2>
+        <p>解锁高级筛选 · 打包下载 · 优先审核，用积分即可兑换</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="vip-hero-r">
+      <div class="vip-pts"><b>{{ points }}</b><span>当前积分</span></div>
+      <div class="vip-pts"><b>{{ level['level_name'] }}</b><span>贡献等级</span></div>
+    </div>
+  </div>
+
+  <!-- ============ 会员权益 ============ -->
+  <div class="panel">
+    <div class="panel-head"><h2>会员权益</h2><span class="cnt">Demo阶段以积分兑换，模拟支付结算</span></div>
+    <div class="benefit-grid">
+      <div class="benefit-item">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M7 12h10M10 18h4" stroke="#2b7fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <b>高级筛选</b><span>搜索结果按浏览量 / 更新时间排序，更快找到热门资料</span>
+      </div>
+      <div class="benefit-item">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" stroke="#22b573" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b>打包下载</b><span>资料详情页一键打包下载全部参考图片（ZIP）</span>
+      </div>
+      <div class="benefit-item">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="#ff9d2e" stroke-width="2" stroke-linejoin="round"/></svg>
+        <b>优先审核</b><span>上传的资料进入优先审核队列，更快公开展示</span>
+      </div>
+      <div class="benefit-item">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#a55eea" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#a55eea" stroke-width="2" stroke-linecap="round"/></svg>
+        <b>身份标识</b><span>昵称旁展示VIP徽标，彰显共创贡献身份</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 积分兑换开通 ============ -->
+  <div class="panel">
+    <div class="panel-head"><h2>积分兑换开通</h2><span class="cnt">当前积分 {{ points }}</span></div>
+    <div class="plan-grid">
+      {% for days, cost, name in plans %}
+      <div class="plan-card {{ 'best' if days == 365 }}">
+        {% if days == 365 %}<span class="plan-tag">超值推荐</span>{% endif %}
+        <h3>{{ name }}</h3>
+        <div class="plan-price"><b>{{ cost }}</b> 积分</div>
+        <p class="plan-days">{{ days }} 天有效期{% if vip %} · 到期后顺延{% endif %}</p>
+        <form action="{{ url_for('vip_redeem') }}" method="post"
+              onsubmit="return confirm('确认使用 {{ cost }} 积分兑换{{ name }}？');">
+          <input type="hidden" name="days" value="{{ days }}">
+          <button type="submit" class="btn {{ 'btn-orange' if days == 365 else 'btn-primary' }}"
+                  {{ 'disabled' if points < cost }}>
+            {% if points < cost %}积分不足{% else %}立即兑换{% endif %}
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+      <div class="plan-card ad-entry">
+        <h3>积分不够？</h3>
+        <div class="plan-price"><b>+{{ ad_reward }}</b> 积分/次</div>
+        <p class="plan-days">每日看激励广告，轻松攒积分（今日已领 {{ today_ads }}/{{ ad_limit }} 次）</p>
+        <a class="btn btn-outline" href="{{ url_for('ad_page') }}">去赚积分</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 开通记录 ============ -->
+  {% if history %}
+  <div class="panel">
+    <div class="panel-head"><h2>开通记录</h2><span class="cnt">最近 {{ history | length }} 条</span></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>套餐</th><th>来源</th><th>有效期至</th><th>开通时间</th></tr></thead>
+        <tbody>
+          {% for h in history %}
+          <tr>
+            <td>{{ h['days'] }} 天 VIP</td>
+            <td>{{ '积分兑换' if h['source'] == 'points' else '管理员开通' }}</td>
+            <td>{{ h['expire_at'][:10] }}</td>
+            <td>{{ h['created_at'][:16] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+.vip-hero { display:flex; justify-content:space-between; align-items:center; gap:18px; flex-wrap:wrap;
+  background:linear-gradient(135deg,#1c2333 0%,#2d3a55 55%,#3b4a6b 100%);
+  border-radius:22px; padding:28px 30px; margin-top:18px; color:#fff;
+  box-shadow:0 12px 34px rgba(20,30,60,.25); }
+.vip-hero.is-vip { background:linear-gradient(135deg,#3a2c10 0%,#6b4e12 50%,#a67c1e 100%); }
+.vip-hero-l { display:flex; align-items:center; gap:16px; }
+.vip-hero h2 { font-size:22px; font-weight:800; letter-spacing:.5px; }
+.vip-hero p { font-size:13.5px; opacity:.85; margin-top:4px; }
+.vip-hero p b { color:#ffd166; }
+.vip-crown { width:54px; height:54px; border-radius:16px; background:rgba(255,209,102,.15);
+  display:grid; place-items:center; flex-shrink:0; }
+.vip-crown svg { width:34px; height:34px; }
+.vip-crown.off { background:rgba(255,255,255,.08); }
+.vip-status-on { background:#ffd166; color:#6b4e12; font-size:12px; font-weight:700;
+  padding:2px 10px; border-radius:20px; vertical-align:middle; }
+.vip-hero-r { display:flex; gap:14px; }
+.vip-pts { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16);
+  border-radius:14px; padding:10px 18px; text-align:center; min-width:96px; }
+.vip-pts b { font-size:17px; display:block; }
+.vip-pts span { font-size:12px; opacity:.75; }
+.benefit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.benefit-item { background:var(--bg-soft,#f6f9fd); border-radius:14px; padding:18px; }
+.benefit-item svg { width:26px; height:26px; margin-bottom:8px; }
+.benefit-item b { display:block; font-size:15px; margin-bottom:4px; }
+.benefit-item span { font-size:12.5px; color:var(--text-3); line-height:1.6; }
+.plan-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+.plan-card { position:relative; border:2px solid var(--line); border-radius:18px; padding:22px;
+  text-align:center; background:#fff; }
+.plan-card.best { border-color:#ff9d2e; box-shadow:0 8px 24px rgba(255,157,46,.15); }
+.plan-tag { position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,#ff9d2e,#ff7a45); color:#fff; font-size:11.5px;
+  font-weight:700; padding:2px 12px; border-radius:20px; }
+.plan-card h3 { font-size:16px; font-weight:700; }
+.plan-price { margin:10px 0 4px; font-size:14px; color:var(--text-2); }
+.plan-price b { font-size:30px; color:#ff9d2e; font-weight:800; }
+.plan-days { font-size:12.5px; color:var(--text-3); margin-bottom:14px; }
+.plan-card .btn { width:100%; }
+.plan-card.ad-entry { background:linear-gradient(160deg,#f6f9fd,#eaf3ff); border-style:dashed; }
+.data-table { width:100%; border-collapse:collapse; font-size:13.5px; }
+.data-table th { text-align:left; padding:10px 14px; background:#f8fbff; color:var(--text-2);
+  font-weight:600; border-bottom:2px solid var(--line); }
+.data-table td { padding:10px 14px; border-bottom:1px solid var(--line); }
+</style>
+{% endblock %}

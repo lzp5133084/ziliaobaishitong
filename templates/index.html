@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}资料百事通 - 找资料 看样例 少走弯路{% endblock %}
+{% block content %}
+
+<!-- ============ Hero 首屏 ============ -->
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <h1><span class="hl-blue">找资料</span>&nbsp;<span class="hl-orange">看样例</span>&nbsp;少走弯路</h1>
+      <p class="sub">真实经验 · 资料样例 · 大家共创的资料参考平台</p>
+      <!-- 传统关键词搜索 -->
+      <form action="{{ url_for('search') }}" method="get" style="margin-bottom:14px;">
+        <div class="search-bar">
+          <span class="s-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <input type="text" name="kw" placeholder="搜索地区、医院、保险公司或资料名称……" autocomplete="off">
+          <button type="submit" class="btn btn-primary">搜索</button>
+        </div>
+      </form>
+
+      <!-- AI智能搜索入口 -->
+      <div class="ai-search-box" id="aiSearchBox">
+        <div class="ai-search-head">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>AI智能搜索</span>
+          <span class="ai-badge">V1.5</span>
+        </div>
+        <div class="ai-search-body">
+          <textarea id="aiQuery" placeholder="用自然语言描述您的需求，例如：我在四川泸州住院做了手术，需要申请平安人寿的理赔，请问需要哪些资料？" rows="2"></textarea>
+          <button class="btn btn-orange" onclick="doAISearch()" id="aiSearchBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            AI搜索
+          </button>
+        </div>
+        <div class="ai-result" id="aiResult" style="display:none;">
+          <div class="ai-answer" id="aiAnswer"></div>
+          <div class="ai-docs" id="aiDocs"></div>
+        </div>
+      </div>
+      <div class="hot-words">
+        <span class="lab">热门搜索：</span>
+        <a href="{{ url_for('search', kw='出院记录') }}">出院记录</a>
+        <a href="{{ url_for('search', kw='理赔申请书') }}">理赔申请书</a>
+        <a href="{{ url_for('search', kw='诊断证明') }}">诊断证明</a>
+        <a href="{{ url_for('search', kw='医疗费用清单') }}">医疗费用清单</a>
+        <a href="{{ url_for('search', kw='医保结算单') }}">医保结算单</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3h8l4 4v14H7V3z" stroke="#2b7fff" stroke-width="2" stroke-linejoin="round"/><path d="M10 12h6M10 16h6" stroke="#2b7fff" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <div><b>{{ stats.docs }}</b><span>资料样例</span></div>
+        </div>
+        <div class="hstat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="#22b573" stroke-width="2"/><circle cx="17" cy="9.5" r="2.5" stroke="#22b573" stroke-width="2"/><path d="M3 20c0-3.4 2.7-5.5 6-5.5s6 2.1 6 5.5" stroke="#22b573" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <div><b>{{ stats.users }}</b><span>热心贡献者</span></div>
+        </div>
+        <div class="hstat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" stroke="#ff9d2e" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="#ff9d2e" stroke-width="2"/></svg></span>
+          <div><b>{{ stats.regions }}</b><span>覆盖省级地区</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <!-- 手绘风文档插画 -->
+      <svg viewBox="0 0 320 260" fill="none">
+        <ellipse cx="160" cy="238" rx="120" ry="14" fill="#2b7fff" opacity=".10"/>
+        <rect x="88" y="34" width="150" height="188" rx="14" fill="#ffffff" stroke="#dfe9f8" stroke-width="3"/>
+        <rect x="108" y="58" width="76" height="10" rx="5" fill="#2b7fff" opacity=".85"/>
+        <rect x="108" y="80" width="110" height="7" rx="3.5" fill="#d7e4f6"/>
+        <rect x="108" y="96" width="94" height="7" rx="3.5" fill="#d7e4f6"/>
+        <rect x="108" y="112" width="104" height="7" rx="3.5" fill="#d7e4f6"/>
+        <rect x="108" y="140" width="46" height="26" rx="7" fill="#e8f2ff"/>
+        <rect x="164" y="140" width="46" height="26" rx="7" fill="#fff2df"/>
+        <rect x="108" y="180" width="110" height="7" rx="3.5" fill="#d7e4f6"/>
+        <rect x="108" y="196" width="80" height="7" rx="3.5" fill="#d7e4f6"/>
+        <circle cx="238" cy="52" r="26" fill="#22b573"/>
+        <path d="M227 52.5 235 60l14-15" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="52" y="88" width="64" height="82" rx="10" fill="#e8f2ff" stroke="#b9d4f8" stroke-width="2.5" transform="rotate(-10 84 129)"/>
+        <rect x="62" y="106" width="40" height="6" rx="3" fill="#8fb9ee" transform="rotate(-10 82 109)"/>
+        <rect x="64" y="120" width="30" height="6" rx="3" fill="#b9d4f8" transform="rotate(-10 79 123)"/>
+        <circle cx="66" cy="60" r="5" fill="#ff9d2e"/>
+        <circle cx="272" cy="150" r="7" fill="#2b7fff" opacity=".55"/>
+        <circle cx="46" cy="196" r="9" fill="#ffd257" opacity=".8"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+
+  <!-- ============ 行业分类 ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>选择行业分类</h2>
+      <span class="more">新增行业将由管理员后台配置开放</span>
+    </div>
+    <div class="cat-grid">
+      {% for ind in industries %}
+      {% set icons = {
+        'shield': '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 5.5v6c0 4.5 3 7.6 7 9.5 4-1.9 7-5 7-9.5v-6L12 3z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="m9 11.5 2.2 2.2L15.5 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        'medical': '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="14" rx="3" stroke="#fff" stroke-width="2"/><path d="M12 10v6M9 13h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6" stroke="#fff" stroke-width="2"/></svg>',
+        'gov': '<svg viewBox="0 0 24 24" fill="none"><path d="M4 21h16M5 21V10m5 11V10m4 11V10m5 11V10M3 10l9-6 9 6H3z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+        'edu': '<svg viewBox="0 0 24 24" fill="none"><path d="m2 9 10-5 10 5-10 5L2 9z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+        'house': '<svg viewBox="0 0 24 24" fill="none"><path d="M3 11 12 4l9 7v9H3v-9z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M10 20v-5h4v5" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+        'car': '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12 6.6 7.5A2 2 0 0 1 8.5 6h7a2 2 0 0 1 1.9 1.5L19 12m-14 0h14a1.5 1.5 0 0 1 1.5 1.5V17H3v-3.5A1.5 1.5 0 0 1 4.5 12z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="7.5" cy="17" r="1.8" fill="#fff"/><circle cx="16.5" cy="17" r="1.8" fill="#fff"/></svg>',
+        'finance': '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="2"/><path d="M12 7v10M15 8.8c-.6-1-1.7-1.4-3-1.4-1.6 0-2.8.9-2.8 2.3 0 2.8 5.8 1.5 5.8 4.3 0 1.4-1.3 2.3-3 2.3-1.4 0-2.6-.6-3.1-1.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+        'more': '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="2" stroke="#fff" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="2" stroke="#fff" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="2" stroke="#fff" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="2" stroke="#fff" stroke-width="2"/></svg>'
+      } %}
+      <a class="cat-item {{ 'locked' if not ind['is_open'] }}"
+         {% if ind['is_open'] %}href="{{ url_for('search', industry=ind['name']) }}"{% else %}href="javascript:void(0)" onclick="alert('该行业暂未开放，将由管理员后台逐步开放')" title="暂未开放"{% endif %}>
+        {% if ind['is_open'] %}<span class="badge-open">已开放</span>{% else %}<span class="badge-soon">暂未开放</span>{% endif %}
+        <span class="ci bg-{{ loop.index }}">{{ icons.get(ind['icon'], icons['more']) | safe }}</span>
+        <b>{{ ind['name'] }}</b>
+        <span>{{ '理赔资料 申请流程' if ind['is_open'] else '持续扩展中' }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ============ 三步轻松搞定 ============ -->
+  <section class="sec">
+    <div class="sec-head"><h2>三步轻松搞定</h2></div>
+    <div class="steps">
+      <div class="step-card">
+        <span class="step-num bg-1">1</span>
+        <svg class="step-ico" viewBox="0 0 48 48" fill="none"><rect x="5" y="8" width="38" height="26" rx="5" stroke="#2b7fff" stroke-width="3"/><circle cx="17" cy="19" r="4" stroke="#2b7fff" stroke-width="3"/><path d="m21 27 3-3.5 4 4.5 4-5 6 7" stroke="#2b7fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div><h3>搜索资料</h3><p>按地区、机构、业务类型<br>快速找到你需要的资料样例</p></div>
+      </div>
+      <div class="step-card">
+        <span class="step-num bg-2">2</span>
+        <svg class="step-ico" viewBox="0 0 48 48" fill="none"><rect x="6" y="6" width="22" height="28" rx="4" stroke="#f43f3f" stroke-width="3"/><rect x="20" y="14" width="22" height="28" rx="4" fill="#fff" stroke="#f43f3f" stroke-width="3"/><path d="M26 22h10M26 28h10M26 34h6" stroke="#f43f3f" stroke-width="3" stroke-linecap="round"/></svg>
+        <div><h3>查看详情</h3><p>查看真实样例、文字说明<br>了解适用场景和注意事项</p></div>
+      </div>
+      <div class="step-card">
+        <span class="step-num bg-3">3</span>
+        <svg class="step-ico" viewBox="0 0 48 48" fill="none"><path d="M24 30V10m0 0-8 8m8-8 8 8" stroke="#16a56f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 30v6a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-6" stroke="#16a56f" stroke-width="3.5" stroke-linecap="round"/></svg>
+        <div><h3>分享资料</h3><p>上传你的资料经验<br>帮助更多有需要的人</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 最新上传 ============ -->
+  <section class="sec">
+    <div class="sec-head">
+      <h2>最新上传</h2>
+      <a class="more" href="{{ url_for('search') }}">查看更多 ›</a>
+    </div>
+    {% if latest %}
+    <div class="doc-grid">
+      {% for it in latest %}
+      <a class="doc-card" href="{{ url_for('detail', doc_id=it.id) }}">
+        <div class="doc-thumb">
+          {% if it.cover %}
+          <img src="{{ url_for('uploaded_file', filename=it.cover) }}" alt="{{ it.title }}" loading="lazy">
+          {% else %}
+          <span class="no-img"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10.5" r="1.8" stroke="currentColor" stroke-width="1.6"/><path d="m12 16 2.5-3 2 2.4 1.5-1.8L21 17" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+          {% endif %}
+        </div>
+        <div class="doc-body">
+          <h3>{{ it.title }}</h3>
+          <span><span class="tag-chip">{{ it.industry }}</span></span>
+          <div class="doc-meta" style="margin-top:8px;">
+            <span>{{ it.province }} · {{ it.city }}</span>
+            <span>用途：{{ it.org_name }}{% if it.source_org %} · 来源：{{ it.source_org }}{% endif %}</span>
+          </div>
+          <div class="doc-foot">
+            <span>{{ it.updated_at[:10] }} 更新</span>
+            <span>{{ it.views }} 次浏览</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box" style="padding:38px 20px;">
+      <h3>还没有公开的资料</h3>
+      <p>成为第一位分享者吧！你的一份样例，能帮更多人少走弯路</p>
+      <a class="btn btn-orange" href="{{ url_for('upload') }}">立即上传资料</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ============ 常用资料类型 ============ -->
+  <section class="sec">
+    <div class="sec-head"><h2>常用资料类型</h2></div>
+    {% if hot_types %}
+    <div class="hot-words" style="margin-top:0;">
+      {% for t in hot_types %}
+      <a href="{{ url_for('search', doc_type=t) }}">{{ t }}</a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="hot-words" style="margin-top:0;"><span class="lab">平台暂无资料类型数据，上传后将自动汇总展示</span></div>
+    {% endif %}
+  </section>
+
+  <!-- ============ 上传引导 CTA ============ -->
+  <div class="cta-banner">
+    <svg class="bulb" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="20" r="13" stroke="#f5a623" stroke-width="3"/><path d="M19 34h10M20.5 39h7" stroke="#f5a623" stroke-width="3" stroke-linecap="round"/><path d="M24 14v6m0 0-3-3m3 3 3-3" stroke="#ffd257" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>
+      <h3>你有资料可以分享吗？</h3>
+      <p>你的一个资料样例，可能帮助更多人少走弯路（上传前请务必完成隐私脱敏）</p>
+    </div>
+    <a class="btn btn-orange btn-lg" href="{{ url_for('upload') }}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 16V6m0 0-4 4m4-4 4 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+      立即上传
+    </a>
+  </div>
+
+</div>
+
+<style>
+.ai-search-box {
+  background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
+  border: 2px solid #ffe4c4;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 14px;
+}
+.ai-search-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--orange-deep);
+  margin-bottom: 10px;
+}
+.ai-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 999px;
+  background: var(--orange); color: #fff;
+}
+.ai-search-body {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.ai-search-body textarea {
+  flex: 1; border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 10px 14px; font-size: 14px; resize: vertical;
+  min-height: 60px; font-family: inherit;
+}
+.ai-search-body textarea:focus {
+  outline: none; border-color: var(--orange);
+}
+.ai-search-body .btn { flex-shrink: 0; margin-top: 4px; }
+.ai-result {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px dashed #ffe4c4;
+}
+.ai-answer {
+  font-size: 14px; line-height: 1.7; color: var(--text);
+  background: #fff; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--line); margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+.ai-docs {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ai-doc-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--line); transition: all .2s;
+}
+.ai-doc-item:hover { border-color: var(--blue); transform: translateX(4px); }
+.ai-doc-cover {
+  width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
+  background: #f0f4f9; flex-shrink: 0;
+}
+.ai-doc-cover img { width: 100%; height: 100%; object-fit: cover; }
+.ai-doc-info { flex: 1; min-width: 0; }
+.ai-doc-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.ai-doc-meta { font-size: 12px; color: var(--text-3); }
+.ai-loading {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--orange-deep); font-size: 13px;
+}
+.ai-loading::after {
+  content: ''; animation: aiDots 1.5s infinite;
+}
+@keyframes aiDots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+</style>
+
+<script>
+function doAISearch() {
+  var query = document.getElementById('aiQuery').value.trim();
+  if (!query) {
+    alert('请输入您要查询的内容');
+    return;
+  }
+  var btn = document.getElementById('aiSearchBtn');
+  var resultBox = document.getElementById('aiResult');
+  var answerBox = document.getElementById('aiAnswer');
+  var docsBox = document.getElementById('aiDocs');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ai-loading">AI思考中</span>';
+  resultBox.style.display = 'block';
+  answerBox.innerHTML = '<span class="ai-loading">正在解析您的需求并搜索资料</span>';
+  docsBox.innerHTML = '';
+
+  fetch('/api/ai/search?q=' + encodeURIComponent(query))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> AI搜索';
+
+      if (!data.ok) {
+        answerBox.innerHTML = '<span style="color:var(--red);">' + (data.message || 'AI搜索失败') + '</span>';
+        return;
+      }
+
+      // 显示AI回答
+      answerBox.textContent = data.answer;
+
+      // 显示推荐资料
+      if (data.docs && data.docs.length > 0) {
+        var html = '';
+        for (var i = 0; i < data.docs.length; i++) {
+          var doc = data.docs[i];
+          var coverHtml = doc.cover
+            ? '<img src="/uploads/' + doc.cover + '" alt="封面">'
+            : '<div style="width:100%;height:100%;display:grid;place-items:center;color:#b7c8dd;font-size:10px;">无图</div>';
+          html += '<a class="ai-doc-item" href="/doc/' + doc.id + '">' +
+            '<div class="ai-doc-cover">' + coverHtml + '</div>' +
+            '<div class="ai-doc-info">' +
+              '<div class="ai-doc-title">' + doc.title + '</div>' +
+              '<div class="ai-doc-meta">' + doc.province + ' ' + doc.city + ' · 用途：' + doc.org_name + (doc.source_org ? ' · 来源：' + doc.source_org : '') + ' · ' + doc.doc_type + '</div>' +
+            '</div>' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m9 6 6 6-6 6" stroke="#93a3b5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</a>';
+        }
+        docsBox.innerHTML = html;
+      } else if (!data.need_clarify) {
+        docsBox.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px;">暂无匹配的资料，您可以尝试上传分享</div>';
+      }
+    })
+    .catch(function(e) {
+      btn.disabled = false;
+      btn.innerHTML = 'AI搜索';
+      answerBox.innerHTML = '<span style="color:var(--red);">网络错误，请稍后重试</span>';
+      console.error(e);
+    });
+}
+
+// 回车触发AI搜索（Ctrl+Enter 或 Cmd+Enter）
+document.getElementById('aiQuery').addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    doAISearch();
+  }
+});
+</script>
+{% endblock %}

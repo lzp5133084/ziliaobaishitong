@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ author['nickname'] }}的主页 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- 作者信息卡片 -->
+  <div class="author-card">
+    <div class="author-avatar">{{ author['nickname'][:1] }}</div>
+    <div class="author-info">
+      <h1>{{ author['nickname'] }} <span class="lv-badge-lg">{{ level['level_name'] }}</span></h1>
+      <div class="author-meta">
+        {% if author['region'] %}<span>📍 {{ author['region'] }}</span>{% endif %}
+        <span>📅 加入于 {{ author['created_at'][:10] }}</span>
+        <span>🏅 贡献积分 {{ level['points'] }}{% if level['next_need'] %}（距下一级还差 {{ level['next_need'] }} 分）{% endif %}</span>
+      </div>
+      <div class="author-stats">
+        <div class="as-item"><b>{{ total_docs }}</b><span>发布资料</span></div>
+        <div class="as-item"><b>{{ total_views }}</b><span>总浏览</span></div>
+        <div class="as-item"><b>{{ helpful_count }}</b><span>获得有帮助</span></div>
+        <div class="as-item"><b>{{ discuss_count }}</b><span>参与讨论</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 作者资料列表 -->
+  <div class="sec">
+    <div class="sec-head">
+      <h2>TA发布的资料</h2>
+      <span class="cnt">{{ total_docs }} 份</span>
+    </div>
+    {% if items %}
+    <div class="doc-grid">
+      {% for it in items %}
+      <a class="doc-card" href="{{ url_for('detail', doc_id=it['id']) }}">
+        <div class="doc-cover">
+          {% if it['cover'] %}<img src="{{ url_for('uploaded_file', filename=it['cover']) }}" alt="{{ it['title'] }}">
+          {% else %}<div class="noimg">暂无图片</div>{% endif %}
+        </div>
+        <div class="doc-body">
+          <h3>{{ it['title'] }}</h3>
+          <div class="doc-meta">
+            <span class="tag-chip">{{ it['industry'] }}</span>
+            <span>{{ it['province'] }}{{ it['city'] }}</span>
+          </div>
+          <div class="doc-foot">
+            <span>👁 {{ it['views'] }}</span>
+            <span>{{ it['updated_at'][:10] }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box">
+      <h3>暂无发布资料</h3>
+      <p>TA还没有发布过资料</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.author-card { background:linear-gradient(135deg,#e8f2ff 0%,#f2f9ff 100%); border-radius:20px; padding:28px; display:flex; gap:20px; align-items:center; margin-bottom:24px; }
+.lv-badge-lg { background:linear-gradient(135deg,#ffd257,#ff9d2e); color:#7a4400; font-size:13px; padding:3px 12px; border-radius:14px; font-weight:700; vertical-align:middle; }
+.author-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#6db1ff,#2b7fff); color:#fff; font-size:32px; font-weight:800; display:grid; place-items:center; flex-shrink:0; }
+.author-info h1 { font-size:24px; font-weight:800; margin-bottom:8px; }
+.author-meta { display:flex; gap:16px; font-size:13.5px; color:var(--text-2); margin-bottom:14px; }
+.author-stats { display:flex; gap:24px; }
+.as-item { text-align:center; }
+.as-item b { display:block; font-size:22px; font-weight:800; color:var(--blue); }
+.as-item span { font-size:12px; color:var(--text-3); }
+.doc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+@media (max-width:1000px) { .doc-grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:600px) { .doc-grid { grid-template-columns:1fr; } }
+.doc-card { background:#fff; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); transition:all .25s; }
+.doc-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-hover); }
+.doc-cover { height:160px; background:#f0f4f9; overflow:hidden; }
+.doc-cover img { width:100%; height:100%; object-fit:cover; }
+.noimg { width:100%; height:100%; display:grid; place-items:center; color:#b7c8dd; font-size:13px; }
+.doc-body { padding:14px; }
+.doc-body h3 { font-size:15px; font-weight:700; margin-bottom:8px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.doc-meta { display:flex; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--text-3); margin-bottom:10px; }
+.doc-foot { display:flex; justify-content:space-between; font-size:12px; color:var(--text-3); }
+</style>
+{% endblock %}

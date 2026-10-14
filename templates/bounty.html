@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}悬赏大厅 - 资料百事通{% endblock %}
+{% block content %}
+<div class="container">
+
+  <!-- ============ 顶部说明 ============ -->
+  <div class="bt-hero">
+    <div>
+      <h2>资料需求悬赏</h2>
+      <p>找不到需要的资料？发布悬赏冻结积分，其他用户上传并被你采纳后，积分自动结算给对方。关闭悬赏则全额退回。</p>
+    </div>
+    {% if cur_user %}<div class="bt-pts">当前积分 <b>{{ points }}</b></div>{% endif %}
+  </div>
+
+  <!-- ============ 发布悬赏 ============ -->
+  {% if cur_user %}
+  <div class="panel">
+    <div class="panel-head"><h2>发布悬赏</h2><span class="cnt">最低 {{ min_points }} 积分</span></div>
+    <form action="{{ url_for('bounty_new') }}" method="post" class="bt-form">
+      <div class="field" style="grid-column:1/-1;">
+        <label>悬赏标题 *</label>
+        <input type="text" name="title" maxlength="60" placeholder="例：求 泸州市平安人寿 住院医疗理赔所需的出院记录样式" required>
+      </div>
+      <div class="field">
+        <label>省份</label>
+        <input type="text" name="province" list="dlProvince" placeholder="如：四川省">
+        <datalist id="dlProvince">{% for p in provinces %}<option value="{{ p }}"></option>{% endfor %}</datalist>
+      </div>
+      <div class="field">
+        <label>城市</label>
+        <input type="text" name="city" placeholder="如：泸州市">
+      </div>
+      <div class="field">
+        <label>机构</label>
+        <input type="text" name="org_name" placeholder="如：平安人寿">
+      </div>
+      <div class="field">
+        <label>资料类型</label>
+        <input type="text" name="doc_type" placeholder="如：出院记录">
+      </div>
+      <div class="field">
+        <label>悬赏积分 *</label>
+        <input type="number" name="reward_points" min="{{ min_points }}" max="10000" value="{{ min_points }}" required>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>需求描述</label>
+        <textarea name="description" rows="2" maxlength="300" placeholder="补充说明你需要什么样的资料、用途、时间要求等（选填）"></textarea>
+      </div>
+      <div style="grid-column:1/-1;text-align:right;">
+        <button type="submit" class="btn btn-orange"
+                onclick="return confirm('发布后将立即冻结对应积分，采纳应征后结算给对方，确认发布？');">发布悬赏</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <div class="dis-login-tip" style="margin-top:18px;">
+    <a href="{{ url_for('login', next=request.path) }}">登录</a> 后可发布悬赏或应征赚积分
+  </div>
+  {% endif %}
+
+  <!-- ============ 进行中的悬赏 ============ -->
+  <div class="panel">
+    <div class="panel-head"><h2>进行中的悬赏</h2><span class="cnt">{{ open_list | length }} 条</span></div>
+    {% if open_list %}
+    {% for b in open_list %}
+    <div class="bt-item">
+      <div class="bt-main">
+        <div class="bt-title">
+          <span class="bt-reward">{{ b['reward_points'] }} 积分</span>
+          <h3>{{ b['title'] }}</h3>
+        </div>
+        <div class="bt-meta">
+          {% if b['province'] or b['city'] %}<span>{{ b['province'] }} {{ b['city'] }}</span>{% endif %}
+          {% if b['org_name'] %}<span>机构：{{ b['org_name'] }}</span>{% endif %}
+          {% if b['doc_type'] %}<span>类型：{{ b['doc_type'] }}</span>{% endif %}
+          <span>发布者：{{ b['nickname'] }}</span>
+          <span>{{ b['created_at'][:16] }} 发布</span>
+          <span>{{ b['entry_count'] }} 人应征</span>
+        </div>
+        {% if b['description'] %}<p class="bt-desc">{{ b['description'] }}</p>{% endif %}
+      </div>
+      {% if cur_user and cur_user['id'] != b['user_id'] %}
+      <div class="bt-enter">
+        {% if my_pub_docs %}
+        <form action="{{ url_for('bounty_enter', bid=b['id']) }}" method="post"
+              onsubmit="return confirm('确认以所选资料应征该悬赏？');">
+          <select name="document_id" required>
+            {% for d in my_pub_docs %}<option value="{{ d['id'] }}">{{ d['title'][:28] }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">应征</button>
+        </form>
+        {% else %}
+        <div class="bt-nodoc">你还没有已发布的资料<br><a href="{{ url_for('upload') }}">去上传资料应征 ›</a></div>
+        {% endif %}
+      </div>
+      {% elif cur_user and cur_user['id'] == b['user_id'] %}
+      <div class="bt-enter"><span class="tag-chip orange">我发布的</span></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-box" style="box-shadow:none;padding:30px;">
+      <h3>暂无进行中的悬赏</h3>
+      <p>发布第一条悬赏，让其他用户帮你找资料</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ============ 我的悬赏 ============ -->
+  {% if cur_user and my_bounties %}
+  <div class="panel">
+    <div class="panel-head"><h2>我的悬赏</h2><span class="cnt">{{ my_bounties | length }} 条</span></div>
+    {% for b in my_bounties %}
+    <div class="bt-item mine">
+      <div class="bt-main">
+        <div class="bt-title">
+          <span class="bt-reward">{{ b['reward_points'] }} 积分</span>
+          <h3>{{ b['title'] }}</h3>
+          {% if b['status'] == 'open' %}<span class="tag-chip green">进行中</span>
+          {% elif b['status'] == 'fulfilled' %}<span class="tag-chip blue">已达成</span>
+          {% else %}<span class="tag-chip gray">已关闭</span>{% endif %}
+        </div>
+        <div class="bt-meta"><span>{{ b['created_at'][:16] }} 发布</span><span>{{ b['entry_count'] }} 人应征</span></div>
+
+        {% set entries = my_entries.get(b['id'], []) %}
+        {% if entries %}
+        <div class="bt-entry-list">
+          {% for e in entries %}
+          <div class="bt-entry">
+            <span class="avatar" style="width:26px;height:26px;font-size:12px;">{{ e['nickname'][:1] }}</span>
+            <b>{{ e['nickname'] }}</b> 应征了
+            <a href="{{ url_for('detail', doc_id=e['document_id']) }}" target="_blank">《{{ e['doc_title'] }}》</a>
+            <span class="bt-time">{{ e['created_at'][:16] }}</span>
+            {% if e['status'] == 'accepted' %}<span class="tag-chip green">已采纳</span>
+            {% elif e['status'] == 'rejected' %}<span class="tag-chip gray">未采纳</span>
+            {% elif b['status'] == 'open' %}
+            <form action="{{ url_for('bounty_accept', bid=b['id'], eid=e['id']) }}" method="post" style="display:inline;"
+                  onsubmit="return confirm('采纳后 {{ b['reward_points'] }} 积分将结算给该用户，确认？');">
+              <button type="submit" class="btn btn-orange btn-sm">采纳并结算</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% elif b['status'] == 'open' %}
+        <div class="bt-meta" style="margin-top:8px;">暂无人应征</div>
+        {% endif %}
+      </div>
+      {% if b['status'] == 'open' %}
+      <div class="bt-enter">
+        <form action="{{ url_for('bounty_close', bid=b['id']) }}" method="post"
+              onsubmit="return confirm('关闭后冻结积分将全额退回，确认关闭？');">
+          <button type="submit" class="btn btn-ghost btn-sm">关闭并退款</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ============ 已结束 ============ -->
+  {% if done_list %}
+  <div class="panel">
+    <div class="panel-head"><h2>最近已结束</h2><span class="cnt">{{ done_list | length }} 条</span></div>
+    {% for b in done_list %}
+    <div class="bt-item done">
+      <div class="bt-main">
+        <div class="bt-title">
+          <span class="bt-reward off">{{ b['reward_points'] }} 积分</span>
+          <h3>{{ b['title'] }}</h3>
+          {% if b['status'] == 'fulfilled' %}<span class="tag-chip blue">已达成</span>
+          {% else %}<span class="tag-chip gray">已关闭</span>{% endif %}
+        </div>
+        <div class="bt-meta"><span>发布者：{{ b['nickname'] }}</span><span>{{ (b['closed_at'] or '')[:16] }} 结束</span></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+.bt-hero { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  background:linear-gradient(135deg,#1c3a2a,#1f6b4a 60%,#22b573); color:#fff;
+  border-radius:22px; padding:26px 30px; margin-top:18px; box-shadow:0 12px 34px rgba(20,90,60,.22); }
+.bt-hero h2 { font-size:21px; font-weight:800; }
+.bt-hero p { font-size:13px; opacity:.88; margin-top:6px; max-width:640px; line-height:1.7; }
+.bt-pts { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2);
+  padding:10px 18px; border-radius:14px; font-size:13px; white-space:nowrap; }
+.bt-pts b { color:#ffd166; font-size:18px; }
+.bt-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.bt-item { display:flex; gap:16px; padding:18px 4px; border-bottom:1px solid var(--line); }
+.bt-item:last-child { border-bottom:none; }
+.bt-item.done { opacity:.75; }
+.bt-main { flex:1; min-width:0; }
+.bt-title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.bt-title h3 { font-size:16px; font-weight:700; }
+.bt-reward { background:linear-gradient(135deg,#ff9d2e,#ff7a45); color:#fff; font-weight:800;
+  font-size:13px; padding:3px 12px; border-radius:20px; flex-shrink:0; }
+.bt-reward.off { background:#c3cbd6; }
+.bt-meta { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--text-3); margin-top:8px; }
+.bt-desc { font-size:13.5px; color:var(--text-2); margin-top:8px; line-height:1.7; }
+.bt-enter { flex-shrink:0; display:flex; align-items:center; }
+.bt-enter form { display:flex; gap:8px; }
+.bt-enter select { max-width:200px; padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; }
+.bt-nodoc { font-size:12.5px; color:var(--text-3); text-align:center; line-height:1.7; }
+.bt-nodoc a { color:#2b7fff; font-weight:600; }
+.bt-entry-list { margin-top:12px; background:var(--bg-soft,#f6f9fd); border-radius:12px; padding:10px 14px; }
+.bt-entry { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;
+  padding:8px 0; border-bottom:1px dashed var(--line); }
+.bt-entry:last-child { border-bottom:none; }
+.bt-entry a { color:#2b7fff; font-weight:600; }
+.bt-time { font-size:12px; color:var(--text-3); }
+.tag-chip.blue { background:var(--blue-light,#e8f2ff); color:var(--blue,#2b7fff); }
+.tag-chip.gray { background:#eef1f5; color:#93a3b5; }
+.dis-login-tip { text-align:center; padding:18px; background:var(--bg-soft,#f6f9fd); border-radius:12px;
+  font-size:14px; color:var(--text-2); }
+.dis-login-tip a { color:#2b7fff; font-weight:600; }
+@media (max-width:640px) { .bt-item { flex-direction:column; } .bt-enter select { max-width:none; flex:1; } }
+</style>
+{% endblock %}
