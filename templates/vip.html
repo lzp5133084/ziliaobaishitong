@@ -108,19 +108,19 @@
 
 <style>
 .vip-hero { display:flex; justify-content:space-between; align-items:center; gap:18px; flex-wrap:wrap;
-  background:linear-gradient(135deg,#1c2333 0%,#2d3a55 55%,#3b4a6b 100%);
+  background:linear-gradient(135deg,#2a1b3d 0%,#3d2756 55%,#c084fc 100%);
   border-radius:22px; padding:28px 30px; margin-top:18px; color:#fff;
-  box-shadow:0 12px 34px rgba(20,30,60,.25); }
-.vip-hero.is-vip { background:linear-gradient(135deg,#3a2c10 0%,#6b4e12 50%,#a67c1e 100%); }
+  box-shadow:0 12px 34px rgba(192,132,252,.25); }
+.vip-hero.is-vip { background:linear-gradient(135deg,#3d2756 0%,#c084fc 50%,#fbbf24 100%); }
 .vip-hero-l { display:flex; align-items:center; gap:16px; }
 .vip-hero h2 { font-size:22px; font-weight:800; letter-spacing:.5px; }
 .vip-hero p { font-size:13.5px; opacity:.85; margin-top:4px; }
-.vip-hero p b { color:#ffd166; }
-.vip-crown { width:54px; height:54px; border-radius:16px; background:rgba(255,209,102,.15);
+.vip-hero p b { color:#fbbf24; }
+.vip-crown { width:54px; height:54px; border-radius:16px; background:rgba(251,191,36,.15);
   display:grid; place-items:center; flex-shrink:0; }
 .vip-crown svg { width:34px; height:34px; }
 .vip-crown.off { background:rgba(255,255,255,.08); }
-.vip-status-on { background:#ffd166; color:#6b4e12; font-size:12px; font-weight:700;
+.vip-status-on { background:linear-gradient(135deg,#f472b6,#fbbf24); color:#1a1025; font-size:12px; font-weight:700;
   padding:2px 10px; border-radius:20px; vertical-align:middle; }
 .vip-hero-r { display:flex; gap:14px; }
 .vip-pts { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16);
@@ -128,26 +128,26 @@
 .vip-pts b { font-size:17px; display:block; }
 .vip-pts span { font-size:12px; opacity:.75; }
 .benefit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
-.benefit-item { background:var(--bg-soft,#f6f9fd); border-radius:14px; padding:18px; }
+.benefit-item { background:rgba(26,16,37,.5); border-radius:14px; padding:18px; color:var(--text); }
 .benefit-item svg { width:26px; height:26px; margin-bottom:8px; }
-.benefit-item b { display:block; font-size:15px; margin-bottom:4px; }
+.benefit-item b { display:block; font-size:15px; margin-bottom:4px; color:var(--text); }
 .benefit-item span { font-size:12.5px; color:var(--text-3); line-height:1.6; }
 .plan-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
 .plan-card { position:relative; border:2px solid var(--line); border-radius:18px; padding:22px;
-  text-align:center; background:#fff; }
-.plan-card.best { border-color:#ff9d2e; box-shadow:0 8px 24px rgba(255,157,46,.15); }
+  text-align:center; background:rgba(53,32,69,.55); color:var(--text); }
+.plan-card.best { border-color:#f472b6; box-shadow:0 8px 24px rgba(244,114,182,.15); }
 .plan-tag { position:absolute; top:-11px; left:50%; transform:translateX(-50%);
-  background:linear-gradient(135deg,#ff9d2e,#ff7a45); color:#fff; font-size:11.5px;
+  background:linear-gradient(135deg,#f472b6 0%,#c084fc 50%,#fbbf24 100%); color:#1a1025; font-size:11.5px;
   font-weight:700; padding:2px 12px; border-radius:20px; }
-.plan-card h3 { font-size:16px; font-weight:700; }
+.plan-card h3 { font-size:16px; font-weight:700; color:var(--text); }
 .plan-price { margin:10px 0 4px; font-size:14px; color:var(--text-2); }
-.plan-price b { font-size:30px; color:#ff9d2e; font-weight:800; }
+.plan-price b { font-size:30px; color:#fbbf24; font-weight:800; }
 .plan-days { font-size:12.5px; color:var(--text-3); margin-bottom:14px; }
 .plan-card .btn { width:100%; }
-.plan-card.ad-entry { background:linear-gradient(160deg,#f6f9fd,#eaf3ff); border-style:dashed; }
+.plan-card.ad-entry { background:linear-gradient(160deg,rgba(53,32,69,.55),rgba(192,132,252,.14)); border-style:dashed; }
 .data-table { width:100%; border-collapse:collapse; font-size:13.5px; }
-.data-table th { text-align:left; padding:10px 14px; background:#f8fbff; color:var(--text-2);
+.data-table th { text-align:left; padding:10px 14px; background:rgba(26,16,37,.7); color:var(--text-2);
   font-weight:600; border-bottom:2px solid var(--line); }
-.data-table td { padding:10px 14px; border-bottom:1px solid var(--line); }
+.data-table td { padding:10px 14px; border-bottom:1px solid var(--line); color:var(--text); }
 </style>
 {% endblock %}

@@ -25,7 +25,7 @@
       {% if d['is_vip'] %}<span class="admin-vip-tag">VIP优先</span>{% endif %}
         <a class="cover" href="{{ url_for('detail', doc_id=d['id']) }}">
           {% if d['cover'] %}<img src="{{ url_for('uploaded_file', filename=d['cover']) }}" alt="封面">
-          {% else %}<span class="noimg" style="position:absolute;inset:0;display:grid;place-items:center;color:#b7c8dd;font-size:11px;">无图片</span>{% endif %}
+          {% else %}<span class="noimg" style="position:absolute;inset:0;display:grid;place-items:center;color:var(--text-3);font-size:11px;">无图片</span>{% endif %}
         </a>
         <div class="ai-main">
           <h3><a href="{{ url_for('detail', doc_id=d['id']) }}">{{ d['title'] }}</a></h3>
@@ -124,9 +124,9 @@
 
 </div>
 <style>
-.admin-card.is-vip { border:1.5px solid #ffd166 !important; box-shadow:0 4px 18px rgba(255,180,60,.14) !important; position:relative; }
+.admin-card.is-vip { border:1.5px solid #f472b6 !important; box-shadow:0 4px 18px rgba(244,114,182,.2) !important; position:relative; }
 .admin-vip-tag { position:absolute; top:-9px; right:14px; z-index:2;
-  background:linear-gradient(135deg,#ffd166,#ff9d2e); color:#6b4e12; font-size:11px;
+  background:linear-gradient(135deg,#f472b6 0%,#c084fc 50%,#fbbf24 100%); color:#1a1025; font-size:11px;
   font-weight:800; padding:2px 10px; border-radius:12px; }
 </style>
 <script>

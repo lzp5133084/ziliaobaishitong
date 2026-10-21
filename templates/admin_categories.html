@@ -106,33 +106,33 @@
 
 <style>
 .cat-add-form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.cat-add-form input[type=text] { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; }
-.cat-add-form input[type=number] { padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; }
+.cat-add-form input[type=text] { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; background:rgba(26,16,37,.5); color:#f3edfa; }
+.cat-add-form input[type=number] { padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; background:rgba(26,16,37,.5); color:#f3edfa; }
 .cat-panel { margin-bottom:20px; }
 .cat-head { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); }
-.cat-title { display:flex; align-items:center; gap:10px; font-size:16px; }
+.cat-title { display:flex; align-items:center; gap:10px; font-size:16px; color:var(--text); }
 .cat-badge { font-size:11px; padding:2px 8px; border-radius:999px; }
 .cat-badge.industry { background:var(--blue-light); color:var(--blue); }
 .cat-meta { font-size:12px; color:var(--text-3); }
 .cat-ops { display:flex; gap:8px; }
-.cat-edit-form { padding:12px 20px; background:#f8fbff; border-bottom:1px solid var(--line); }
+.cat-edit-form { padding:12px 20px; background:rgba(26,16,37,.5); border-bottom:1px solid var(--line); }
 .cat-edit-form form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.cat-edit-form input[type=text] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; }
-.cat-edit-form input[type=number] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; width:70px; }
+.cat-edit-form input[type=text] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; background:rgba(26,16,37,.5); color:#f3edfa; }
+.cat-edit-form input[type=number] { padding:7px 12px; border:1.5px solid var(--line); border-radius:8px; width:70px; background:rgba(26,16,37,.5); color:#f3edfa; }
 .cat-children { padding:16px 20px; }
 .cat-group { margin-bottom:20px; }
 .cat-group-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .cat-group-head h3 { font-size:14px; font-weight:600; color:var(--text-2); }
 .cat-add-inline { display:flex; gap:6px; }
-.cat-add-inline input { padding:6px 12px; border:1.5px solid var(--line); border-radius:8px; font-size:13px; width:140px; }
+.cat-add-inline input { padding:6px 12px; border:1.5px solid var(--line); border-radius:8px; font-size:13px; width:140px; background:rgba(26,16,37,.5); color:#f3edfa; }
 .cat-list { display:flex; flex-wrap:wrap; gap:8px; }
-.cat-item { background:#f8fbff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; position:relative; }
+.cat-item { background:rgba(26,16,37,.5); border:1px solid var(--line); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; position:relative; color:var(--text); }
 .cat-item .name { font-size:13.5px; font-weight:500; }
 .cat-item .meta { font-size:11px; color:var(--text-3); }
 .cat-item .ops { display:flex; gap:4px; margin-left:6px; }
-.btn-ico { width:24px; height:24px; border-radius:6px; display:grid; place-items:center; font-size:12px; background:#eef2f7; color:var(--text-2); border:none; cursor:pointer; }
+.btn-ico { width:24px; height:24px; border-radius:6px; display:grid; place-items:center; font-size:12px; background:rgba(53,32,69,.55); color:var(--text-2); border:none; cursor:pointer; }
 .btn-ico:hover { background:var(--blue-light); color:var(--blue); }
-.btn-ico.danger:hover { background:#fff1f0; color:var(--red); }
+.btn-ico.danger:hover { background:rgba(251,113,133,.14); color:var(--red); }
 </style>
 
 <script>
