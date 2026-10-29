@@ -519,3 +519,8 @@ V2.0 社区共创 ✓ / V3.0 商业化 ✓ —— 全部完成
 - 新增 seed_data.py：集中维护行业分类种子数据，提供 seed_full_categories() 幂等补齐函数
 - app.py init_db 末尾调用 seed_full_categories()，保证新装库/迁移库同样自动获得完整分类
 - 数据库已备份 ziliaobaishitong.db.bak_full；服务已重启，/api/categories/tree 验证8个行业全部 ready=true
+[2026-10-29] 行业名调整：法务 → 法务相关
+- 按用户要求将行业名称统一改为「法务相关」
+- industries.name、categories 顶级节点(id=131)、app.py 种子、seed_data.py 键名同步修改
+- 子分类不受影响：机构14项、业务16项、资料类型18项保持完整
+- 数据库备份 ziliaobaishitong.db.bak_rename；服务已重启，/api/categories/tree 验证 8 个行业全部 ready
