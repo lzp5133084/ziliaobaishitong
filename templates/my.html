@@ -1,5 +1,18 @@
 {% extends "base.html" %}
-{% block title %}我的贡献 - 资料百事通{% endblock %}
+{% block title %}我的贡献 - 资料百事通<script>
+function copyInvite(){
+  var el = document.getElementById("inviteLink");
+  el.select(); el.setSelectionRange(0, 99999);
+  var done = function(){ var b=document.querySelector(".invite-panel .btn"); var t=b.textContent; b.textContent="已复制"; setTimeout(function(){ b.textContent=t; },1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(el.value).then(done); }
+  else { document.execCommand("copy"); done(); }
+}
+</script>
+<style>
+.invite-body { display:flex; gap:10px; padding:14px 18px; }
+.invite-input { flex:1; padding:9px 14px; border:1.5px solid var(--line); border-radius:10px; font-size:13px; background:rgba(26,16,37,.5); color:#f3edfa; }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container">
 
@@ -25,6 +38,15 @@
       <a class="btn btn-outline btn-sm" href="{{ url_for('ad_page') }}">看广告赚积分</a>
       <a class="btn btn-primary btn-sm" href="{{ url_for('vip_center') }}">{{ '会员中心' if vip else '开通VIP会员' }}</a>
       <a class="btn btn-orange btn-sm" href="{{ url_for('bounty_hall') }}">悬赏大厅</a>
+    </div>
+  </div>
+
+  <!-- ============ 邀请好友 ============ -->
+  <div class="panel invite-panel">
+    <div class="panel-head"><h2>邀请好友</h2><span class="cnt">好友通过你的专属链接注册，后台自动记录推荐关系</span></div>
+    <div class="invite-body">
+      <input id="inviteLink" class="invite-input" readonly value="{{ invite_url }}" onclick="this.select()">
+      <button type="button" class="btn btn-primary btn-sm" onclick="copyInvite()">复制邀请链接</button>
     </div>
   </div>
 

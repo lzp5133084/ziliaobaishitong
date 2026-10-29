@@ -5,7 +5,12 @@
   <div class="auth-card">
     <h2>注册账号</h2>
     <p class="sub">加入资料百事通，分享经验帮助更多人</p>
+    {% if ref %}
+    <div class="invite-banner">你正通过 <b>{{ ref }}</b> 的邀请链接注册，注册后推荐关系将记录在案</div>
+    {% endif %}
     <form action="{{ url_for('register') }}" method="post">
+      <input type="hidden" name="ref" value="{{ ref or '' }}">
+      <input type="hidden" name="from" value="{{ from_src or '' }}">
       <div class="field">
         <label>用户名<em>*</em></label>
         <input type="text" name="username" required minlength="3" maxlength="20" placeholder="3-20个字符，注册后不可修改">
@@ -33,4 +38,8 @@
     <div class="auth-foot">已有账号？<a href="{{ url_for('login') }}">直接登录</a></div>
   </div>
 </div>
+<style>
+.invite-banner { margin-bottom:14px; padding:10px 14px; border-radius:10px; background:rgba(96,165,250,.12); color:var(--blue); font-size:13.5px; text-align:center; }
+.invite-banner b { font-weight:700; }
+</style>
 {% endblock %}

@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS users(
     role TEXT DEFAULT 'user',            -- user/admin，预留角色扩展
     status INTEGER DEFAULT 1,
     region TEXT,
+    reg_source TEXT DEFAULT '系统注册',   -- 注册来源：系统注册/邀请链接/入口页面
+    referrer TEXT DEFAULT '系统注册',     -- 推荐人用户名，无邀请推荐则为系统注册
     created_at TEXT
 );
 CREATE TABLE IF NOT EXISTS industries(
@@ -421,6 +423,12 @@ def init_db():
         db.execute("ALTER TABLE industries ADD COLUMN subtitle TEXT DEFAULT ''")
     except sqlite3.OperationalError:
         pass
+    # V3.1 迁移：users 增加注册来源与推荐人列（存量用户自动回填默认系统注册）
+    for _ucol in ("reg_source TEXT DEFAULT '系统注册'", "referrer TEXT DEFAULT '系统注册'"):
+        try:
+            db.execute("ALTER TABLE users ADD COLUMN %s" % _ucol)
+        except sqlite3.OperationalError:
+            pass
     cur = db.execute("SELECT COUNT(*) FROM industries")
     if cur.fetchone()[0] == 0:
         db.executemany(
@@ -850,6 +858,9 @@ def uploaded_file(filename):
 # ---------------------------------------------------------------- 用户系统
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """统一注册入口：全站注册均汇聚本接口；ref=推荐人用户名(邀请链接)，from=注册来源入口"""
+    ref = (request.values.get("ref") or "").strip()[:20]
+    from_src = (request.values.get("from") or "").strip()[:20]
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
@@ -867,15 +878,24 @@ def register():
         elif query("SELECT id FROM users WHERE username=?", (username,), one=True):
             flash("该用户名已被注册", "warn")
         else:
+            # 注册来源与推荐人：通过邀请链接注册记录推荐人，否则默认系统注册
+            reg_source = from_src or "系统注册"
+            referrer = "系统注册"
+            if ref:
+                ru = query("SELECT username FROM users WHERE username=? AND status=1", (ref,), one=True)
+                if ru and ru["username"] != username:
+                    referrer = ru["username"]
+                    reg_source = "邀请链接"
             uid = execute(
-                "INSERT INTO users(username,password_hash,nickname,region,created_at) VALUES(?,?,?,?,?)",
-                (username, generate_password_hash(password), nickname, region, now_str()))
-            add_log("用户注册", user_id=uid, detail=username)
+                "INSERT INTO users(username,password_hash,nickname,region,reg_source,referrer,created_at) VALUES(?,?,?,?,?,?,?)",
+                (username, generate_password_hash(password), nickname, region, reg_source, referrer, now_str()))
+            add_log("用户注册", user_id=uid,
+                    detail="%s（来源:%s 推荐人:%s）" % (username, reg_source, referrer))
             session["uid"] = uid
             session.permanent = True
             flash("注册成功，欢迎加入资料百事通！", "ok")
             return redirect(url_for("index"))
-    return render_template("register.html")
+    return render_template("register.html", ref=ref, from_src=from_src)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -1021,9 +1041,11 @@ def my():
         """SELECT cs.*, d.title AS doc_title, uu.nickname AS from_name FROM consultations cs
            JOIN documents d ON d.id=cs.document_id JOIN users uu ON uu.id=cs.from_user
            WHERE cs.to_user=? ORDER BY cs.created_at DESC LIMIT 50""", (uid,))
+    me = query("SELECT * FROM users WHERE id=?", (uid,), one=True)
+    invite_url = request.host_url.rstrip("/") + url_for("register", ref=me["username"])
     return render_template("my.html", items=items, n_pub=n_pub, n_pen=n_pen,
                            points=user_points(uid), level=user_level(uid),
-                           vip=user_vip(uid),
+                           vip=user_vip(uid), me=me, invite_url=invite_url,
                            consults_asked=consults_asked, consults_recv=consults_recv)
 
 
