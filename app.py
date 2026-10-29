@@ -343,13 +343,14 @@ POINTS_RULES = {
 }
 
 INIT_INDUSTRIES = [
-    ("保险理赔", "shield", 1, 1),
-    ("医疗健康", "medical", 0, 2),
-    ("政务办事", "gov", 0, 3),
-    ("教育升学", "edu", 0, 4),
-    ("房产相关", "house", 0, 5),
-    ("交通出行", "car", 0, 6),
-    ("金融理财", "finance", 0, 7),
+    ("保险理赔", "shield", 1, 1, "理赔资料 · 申请流程"),
+    ("医疗健康", "medical", 0, 2, "就医资料 · 报销流程"),
+    ("政务办事", "gov", 0, 3, "办事材料 · 办理流程"),
+    ("教育升学", "edu", 0, 4, "升学资料 · 办理流程"),
+    ("房产相关", "house", 0, 5, "房产资料 · 过户流程"),
+    ("交通出行", "car", 0, 6, "车务资料 · 办理流程"),
+    ("金融理财", "finance", 0, 7, "理财资料 · 办理流程"),
+    ("法务", "legal", 1, 8, "法律文书 · 维权流程"),
 ]
 
 PROVINCES = ["北京市", "天津市", "上海市", "重庆市", "河北省", "山西省", "辽宁省", "吉林省",
@@ -414,10 +415,15 @@ def init_db():
         db.execute("ALTER TABLE document_images ADD COLUMN ref_type TEXT DEFAULT 'doc'")
     except sqlite3.OperationalError:
         pass
+    # 迁移：industries 增加 subtitle 列（首页行业卡片副标题，按行业分别配置）
+    try:
+        db.execute("ALTER TABLE industries ADD COLUMN subtitle TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     cur = db.execute("SELECT COUNT(*) FROM industries")
     if cur.fetchone()[0] == 0:
         db.executemany(
-            "INSERT INTO industries(name,icon,is_open,sort) VALUES(?,?,?,?)",
+            "INSERT INTO industries(name,icon,is_open,sort,subtitle) VALUES(?,?,?,?,?)",
             INIT_INDUSTRIES)
     cur = db.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
     if cur.fetchone()[0] == 0:
@@ -548,6 +554,44 @@ def cat_children(parent_id, cat_type):
         (parent_id, cat_type))
 
 
+def industries_with_status():
+    """行业列表 + 真实可用状态
+
+    修复逻辑：industries 与 categories 是两张独立表，id 不可混用。
+    统一以 industries.id 作为上传/筛选用的 industry_id，
+    再按行业名称关联 categories 顶级节点，判断该行业是否已配置子分类。
+    """
+    inds = query("SELECT id,name,icon,is_open,sort,COALESCE(subtitle,'') AS subtitle FROM industries ORDER BY sort")
+    tops = query("SELECT id,name FROM categories WHERE parent_id=0 AND type='industry' AND status=1")
+    top_by_name = {t["name"]: t["id"] for t in tops}
+    kid_counts = {r["parent_id"]: r["c"] for r in query(
+        "SELECT parent_id,COUNT(*) c FROM categories"
+        " WHERE type IN ('org','business','doc_type') AND status=1 GROUP BY parent_id")}
+    items = []
+    for i in inds:
+        row = dict(i)
+        cid = top_by_name.get(i["name"])
+        row["cat_id"] = cid
+        row["child_count"] = kid_counts.get(cid, 0)
+        row["ready"] = bool(i["is_open"] and row["child_count"] > 0)
+        items.append(row)
+    return items
+
+
+def usable_industries(include_id=None):
+    """可选用行业：已开放且子分类已配置；编辑/改版时可保留该资料的历史行业"""
+    items = [i for i in industries_with_status() if i["ready"]]
+    if include_id and all(i["id"] != include_id for i in items):
+        row = query("SELECT id,name,icon,is_open,sort,COALESCE(subtitle,'') AS subtitle FROM industries WHERE id=?", (include_id,), one=True)
+        if row:
+            r = dict(row)
+            r["cat_id"] = None
+            r["child_count"] = 0
+            r["ready"] = False
+            items.append(r)
+    return items
+
+
 def cat_tree():
     """获取完整分类树（供后台管理）"""
     rows = query("SELECT * FROM categories ORDER BY parent_id,sort")
@@ -673,7 +717,7 @@ def index():
         "users": query("SELECT COUNT(DISTINCT user_id) c FROM documents WHERE status='published'", one=True)["c"],
         "regions": query("SELECT COUNT(DISTINCT province) c FROM documents WHERE status='published'", one=True)["c"],
     }
-    industries = query("SELECT * FROM industries ORDER BY sort")
+    industries = industries_with_status()
     latest = query(
         """SELECT d.* FROM documents d WHERE d.status='published'
            ORDER BY d.published_at DESC LIMIT 8""")
@@ -744,7 +788,7 @@ def search():
         it["cover"] = doc_cover(it["id"])
         items.append(it)
 
-    industries = query("SELECT * FROM industries ORDER BY sort")
+    industries = industries_with_status()
     used_cities = [r["city"] for r in query(
         "SELECT DISTINCT city FROM documents WHERE status='published' ORDER BY city")]
     used_types = [r["doc_type"] for r in query(
@@ -880,6 +924,14 @@ def validate_doc_form(form):
         errors.append("请选择所属行业")
     elif not ind["is_open"]:
         errors.append("该行业暂未开放，请选择已开放行业")
+    else:
+        top = query("SELECT id FROM categories WHERE parent_id=0 AND type='industry' AND name=? AND status=1",
+                    (ind["name"],), one=True)
+        kids = query("""SELECT COUNT(*) c FROM categories
+                        WHERE parent_id=? AND type IN ('org','business','doc_type') AND status=1""",
+                     (top["id"],), one=True)["c"] if top else 0
+        if kids == 0:
+            errors.append("该行业的机构/业务/资料类型分类尚未配置完整，暂时无法上传，请选择其他行业")
     for key, label in (("province", "省份"), ("city", "城市"), ("org_name", "用途机构"),
                        ("source_org", "来源机构"), ("title", "资料名称"), ("business", "适用业务"),
                        ("tags", "关键词标签"), ("purpose", "资料用途"), ("obtain_method", "获取方式")):
@@ -896,7 +948,7 @@ def validate_doc_form(form):
 @app.route("/upload", methods=["GET", "POST"], endpoint="upload")
 @login_required
 def upload():
-    industries = query("SELECT * FROM industries WHERE is_open=1 ORDER BY sort")
+    industries = usable_industries()
     if request.method == "POST":
         errors, data, industry_id = validate_doc_form(request.form)
         files = [f for f in request.files.getlist("images") if f and f.filename]
@@ -986,7 +1038,7 @@ def my_edit(doc_id):
     if d["status"] not in ("pending", "rejected"):
         flash("该资料当前状态（%s）不允许修改" % STATUS_MAP.get(d["status"], d["status"]), "warn")
         return redirect(url_for("my"))
-    industries = query("SELECT * FROM industries WHERE is_open=1 ORDER BY sort")
+    industries = usable_industries(include_id=d["industry_id"])
     if request.method == "POST":
         errors, data, industry_id = validate_doc_form(request.form)
         if errors:
@@ -1215,18 +1267,22 @@ def admin_category_del(cat_id):
 # ---------------------------------------------------------------- 分类级联API（供前端选择）
 @app.route("/api/categories/tree")
 def api_categories_tree():
-    """获取完整分类树（JSON格式，供前端级联选择）"""
-    tree = cat_tree()
-    industries = query("SELECT * FROM categories WHERE parent_id=0 AND type='industry' AND status=1 ORDER BY sort")
+    """获取完整分类树（JSON格式，供前端级联选择）
+
+    修复：industry_id 统一使用 industries.id，再按名称映射到 categories 顶级节点，
+    避免两张表的自增 id 混用导致除"保险理赔"外其余行业的选项全部为空。
+    """
     result = []
-    for ind in industries:
-        item = {
-            "id": ind["id"], "name": ind["name"],
-            "orgs": [{"id": o["id"], "name": o["name"]} for o in cat_children(ind["id"], "org")],
-            "businesses": [{"id": b["id"], "name": b["name"]} for b in cat_children(ind["id"], "business")],
-            "doc_types": [{"id": d["id"], "name": d["name"]} for d in cat_children(ind["id"], "doc_type")],
-        }
-        result.append(item)
+    for ind in industries_with_status():
+        cid = ind["cat_id"]
+        result.append({
+            "id": ind["id"],
+            "name": ind["name"],
+            "ready": ind["ready"],
+            "orgs": [{"id": o["id"], "name": o["name"]} for o in cat_children(cid, "org")] if cid else [],
+            "businesses": [{"id": b["id"], "name": b["name"]} for b in cat_children(cid, "business")] if cid else [],
+            "doc_types": [{"id": d["id"], "name": d["name"]} for d in cat_children(cid, "doc_type")] if cid else [],
+        })
     return jsonify({"ok": True, "items": result})
 
 
@@ -1241,7 +1297,7 @@ def new_version(doc_id):
     if old_doc["status"] != "published":
         flash("只有已发布的资料才能提交新版本", "warn")
         return redirect(url_for("detail", doc_id=doc_id))
-    industries = query("SELECT * FROM industries WHERE is_open=1 ORDER BY sort")
+    industries = usable_industries(include_id=old_doc["industry_id"])
     if request.method == "POST":
         errors, data, industry_id = validate_doc_form(request.form)
         files = [f for f in request.files.getlist("images") if f and f.filename]
