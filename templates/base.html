@@ -40,7 +40,7 @@
         <a class="btn btn-ghost btn-sm" href="{{ url_for('logout') }}">退出</a>
       {% else %}
         <a class="btn btn-outline btn-sm" href="{{ url_for('login') }}">登录</a>
-        <a class="btn btn-primary btn-sm" href="{{ url_for('register') }}">注册</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('register') }}?from=导航栏">注册</a>
       {% endif %}
     </div>
   </div>
@@ -111,5 +111,7 @@ window.SITE = { isLogin: {{ 'true' if cur_user else 'false' }} };
 </script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% block scripts %}{% endblock %}
+<!-- 生态栏AI小禾 -->
+<script src="https://ecojia.cn/static/js/eco-bar.js?v=20261026b" defer></script>
 </body>
 </html>
