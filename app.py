@@ -29,6 +29,7 @@ from flask import (Flask, g, request, session, redirect, url_for, send_file,
 from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image, ImageOps
 import ai_service
+from seed_data import seed_full_categories
 
 # ---------------------------------------------------------------- 基础配置
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -450,7 +451,7 @@ def init_db():
                                    "医保结算单", "理赔申请书", "病历本", "检查报告", "手术记录"]):
             db.execute("INSERT INTO categories(parent_id,type,name,sort,created_at) VALUES(?,?,?,?,?)",
                        (ind_id, "doc_type", name, i+1, now))
-    db.commit()
+    # 全行业分类默认值补齐（幂等，已有分类不重复）\n    seed_full_categories(db, now_str())\n    db.commit()
     db.close()
 
 
