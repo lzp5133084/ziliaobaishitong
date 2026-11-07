@@ -207,12 +207,14 @@
     var html = rows.map(function (r) {
       return '<div class="pv-row"><span class="k">' + r[0] + '</span><span class="v">' + esc(r[1]) + "</span></div>";
     }).join("");
-    // 图片预览（已脱敏的实时生成）
+    // 图片预览：旧图（排除已勾选删除的）+ 新上传（已脱敏实时生成）
     var imgs = [];
     if (CFG.mode === "edit") {
-      form.querySelectorAll('input[name="remove_img"]:checked').length;
-      Array.prototype.forEach.call(document.querySelectorAll(".stage-item .thumb img"), function (im) {
-        if (im.src.indexOf("blob:") !== 0) imgs.push({ src: im.src, masked: false, old: true });
+      Array.prototype.forEach.call(form.querySelectorAll('input[name="remove_img"]'), function (cb) {
+        if (cb.checked) return;
+        var box = cb.closest ? cb.closest(".stage-item") : null;
+        var im = box ? box.querySelector(".thumb img") : null;
+        if (im) imgs.push({ src: im.src, masked: false, old: true });
       });
     }
     staged.forEach(function (it) {
@@ -251,9 +253,17 @@
       for (var i = 0; i < fields.length; i++) {
         if (!fields[i].value.trim()) {
           fields[i].focus();
-          alert("请完整填写第1步的必填项：" + (fields[i].previousElementSibling ? fields[i].previousElementSibling.textContent.replace("*", "") : "必填项"));
+          var lb = fields[i].previousElementSibling;
+          var name = lb ? lb.textContent.replace(/\*/g, "").trim() : "必填项";
+          alert("请填写第1步的必填项：" + name);
           return false;
         }
+      }
+      // 级联选项未就绪时不允许进入下一步，避免提交后后端报"分类未配置"
+      var orgSel = $("fOrg");
+      if (orgSel && orgSel.options.length <= 1) {
+        alert("请先选择所属行业，并确认机构/业务/资料类型选项已加载");
+        return false;
       }
       return true;
     }

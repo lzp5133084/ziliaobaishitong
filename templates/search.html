@@ -15,7 +15,7 @@
         <select name="industry">
           <option value="">全部行业</option>
           {% for ind in industries %}
-          <option value="{{ ind['name'] }}" {{ 'selected' if f.industry == ind['name'] }}>{{ ind['name'] }}{{ '' if ind['is_open'] else '（未开放）' }}</option>
+          <option value="{{ ind['name'] }}" {{ 'selected' if f.industry == ind['name'] }}>{{ ind['name'] }}{{ '' if ind['ready'] else '（筹备中）' }}</option>
           {% endfor %}
         </select>
       </div>

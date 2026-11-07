@@ -34,7 +34,8 @@
               <option value="{{ ind['id'] }}" {{ 'selected' if form.get('industry_id')|string == ind['id']|string }}>{{ ind['name'] }}</option>
               {% endfor %}
             </select>
-            <div class="hint">当前仅开放已开放行业，更多行业后续开放</div>
+            <div class="hint">仅列出已开放行业；未列出的行业说明其机构/业务/资料类型仍在整理中</div>
+            <div class="hint" id="catWarn" style="display:none;color:var(--red);"></div>
           </div>
           <div class="field">
             <label>用途机构<em>*</em></label>
@@ -240,7 +241,15 @@ window.UPLOAD_CFG = {
 // ============ 级联分类加载 ============
 var cascadeData = null;
 
+function showCatWarn(msg) {
+  var w = document.getElementById('catWarn');
+  if (!w) return;
+  w.style.display = msg ? 'block' : 'none';
+  w.textContent = msg || '';
+}
+
 function loadCascade(industryId) {
+  showCatWarn('');
   if (!industryId) {
     document.getElementById('fOrg').innerHTML = '<option value="">请先选择行业</option>';
     document.getElementById('fBusiness').innerHTML = '<option value="">请先选择行业</option>';
@@ -250,12 +259,16 @@ function loadCascade(industryId) {
   fetch('/api/categories/tree')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.ok) return;
+      if (!data.ok) { showCatWarn('分类加载失败，请刷新页面重试'); return; }
       var ind = null;
       for (var i = 0; i < data.items.length; i++) {
         if (data.items[i].id == industryId) { ind = data.items[i]; break; }
       }
-      if (!ind) return;
+      if (!ind) { showCatWarn('该行业分类尚未配置，请联系管理员'); return; }
+      if (!ind.ready || !ind.orgs.length || !ind.businesses.length || !ind.doc_types.length) {
+        showCatWarn('该行业的机构/业务/资料类型尚未配置完整，暂时无法上传，请改选其他行业');
+        return;
+      }
       // 机构
       var orgSel = document.getElementById('fOrg');
       orgSel.innerHTML = '<option value="">请选择机构</option>';

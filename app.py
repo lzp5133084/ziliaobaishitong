@@ -438,7 +438,7 @@ def init_db():
     if cur.fetchone()[0] == 0:
         db.execute(
             "INSERT INTO users(username,password_hash,nickname,role,created_at) VALUES(?,?,?,?,?)",
-            ("admin", generate_password_hash("admin123"), "平台管理员", "admin", now_str()))
+            ("admin", generate_password_hash(os.environ.get("ZLBST_ADMIN_PASSWORD", "ChangeMe!2027")), "平台管理员", "admin", now_str()))
     # 初始化默认分类（保险理赔行业示例）
     cur = db.execute("SELECT COUNT(*) FROM categories")
     if cur.fetchone()[0] == 0:
@@ -2238,6 +2238,6 @@ if __name__ == "__main__":
     print("  资料百事通 %s  作者：%s（微信：%s）" % (APP_VERSION, APP_AUTHOR, APP_WECHAT))
     print("  程序大小：%.2f MB   最后保存：%s" % (APP_SIZE_MB, APP_LAST_SAVE.strftime("%Y-%m-%d %H:%M")))
     print("  访问地址：http://127.0.0.1:%d  （手机同局域网访问 http://本机IP:%d）" % (_port, _port))
-    print("  管理后台：http://127.0.0.1:%d/admin  账号 admin / admin123" % _port)
+    print("  管理后台：http://127.0.0.1:%d/admin  （账号 admin，口令由环境变量 ZLBST_ADMIN_PASSWORD 提供）" % _port)
     print("=" * 60)
     app.run(host=_host, port=_port, debug=False, threaded=True)

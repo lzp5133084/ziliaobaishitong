@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /my
+Sitemap: https://ziliao.ecojia.cn/sitemap.xml

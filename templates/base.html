@@ -6,7 +6,18 @@
 <meta name="theme-color" content="#1a1025">
 <title>{% block title %}资料百事通 - 人人分享经验，人人找到答案{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<meta name="description" content="{% block description %}资料百事通（ziliao.ecojia.cn）：出院记录、诊断证明、报销单据、办事表格等各类资料的众创共享库，支持关键词搜索与分类筛选，可上传赚积分兑换 VIP，全部资料来自用户分享，仅供办事参考。{% endblock %}">
+<meta name="keywords" content="资料百事通,出院记录,诊断证明,报销单据,办事资料,资料共享,众创资料库">
+<meta name="author" content="军哥懂保">
+{% block robots %}<meta name="robots" content="index,follow">{% endblock %}
+<link rel="canonical" href="https://ziliao.ecojia.cn{{ request.path }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="资料百事通">
+<meta property="og:title" content="{% block ogtitle %}资料百事通 - 人人分享经验，人人找到答案{% endblock %}">
+<meta property="og:description" content="出院记录、诊断证明、报销单据等资料的众创共享库，搜索即用，上传赚积分。">
+<meta property="og:url" content="https://ziliao.ecojia.cn{{ request.path }}">
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="https://ecojia.cn/static/apple-touch-icon.png">
 </head>
 <body>
 
